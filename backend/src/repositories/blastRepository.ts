@@ -41,14 +41,6 @@ export const blastRepository = {
         return prisma.blastJob.update({ where: { id }, data: { status: status as any, ...extra } });
     },
 
-    async findPendingRecipients(limit = 1) {
-        return prisma.blastRecipient.findMany({
-            where: { status: 'PENDING' },
-            include: { blastJob: { include: { device: true } } },
-            orderBy: { createdAt: 'asc' },
-            take: limit,
-        });
-    },
 
     async updateRecipientStatus(id: string, status: 'SENT' | 'FAILED', error?: string, sentAt?: Date) {
         return prisma.blastRecipient.update({
@@ -72,14 +64,5 @@ export const blastRepository = {
             prisma.blastRecipient.count({ where: { blastJobId, status: 'PENDING' } }),
         ]);
         return { total, sent, failed, pending };
-    },
-
-    async findDueScheduledJobs() {
-        return prisma.blastJob.findMany({
-            where: {
-                status: 'SCHEDULED',
-                scheduledAt: { lte: new Date() },
-            },
-        });
-    },
+    }
 };

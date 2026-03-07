@@ -11,4 +11,4 @@ Project ini dibangun dengan arsitektur skalabel sehingga sangat mudah untuk dike
 4. ~~**💬 Shared Team Inbox (Live Chat CS)**~~ (✅ Selesai)
    UI khusus mirip WhatsApp Web yang memungkinkan Multi-Customer Service milik _User_ membalas chat secara manual dari satu nomor yang sama.
 5. ~~**🚀 Migrasi Queue ke Redis (BullMQ)**~~ (✅ Selesai)
-   Mengganti sistem _Database-Queue_ bawaan saat ini dengan **Redis** Worker agar bisa diskalakan secara horizontal (menjalankan banyak instance Worker sekaligus).
+   Mengganti sistem _Database-Queue_ bawaan dengan **Redis** (BullMQ). Kode lama yang menggunakan database queue telah dihapus sepenuhnya untuk efisiensi dan skalabilitas.
