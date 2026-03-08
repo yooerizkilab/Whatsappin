@@ -69,7 +69,27 @@ Manage contact segments with custom colors.
 
 ---
 
-### 5. Templates (`/api/templates`)
+### 5. Analytics Dashboard (`/api/analytics`)
+
+Statistik performa pesan dan kampanye.
+
+- **`GET /summary`**: Angka statistik umum (Total Sent, Pending, Failed, Success Rate).
+- **`GET /chart`**: Data volume pesan harian untuk grafik.
+- **`GET /blasts`**: Statistik performa kampanye blast terbaru.
+
+---
+
+### 6. Media Library & Storage (`/api/media`)
+
+Penyimpanan aset media internal.
+
+- **`GET /`**: Daftar semua file yang diunggah.
+- **`POST /upload`**: Mengunggah file baru (Multipart).
+- **`DELETE /:id`**: Menghapus file dari library.
+
+---
+
+### 7. Templates (`/api/templates`)
 
 - **`GET /`**: Daftar template pesan.
 - **`POST /`**: Buat template baru.
@@ -78,7 +98,7 @@ Manage contact segments with custom colors.
 
 ---
 
-### 6. Auto Responder (`/api/auto-responder`)
+### 8. Auto Responder (`/api/auto-responder`)
 
 - **`GET /`**: Daftar auto-responder.
 - **`POST /`**: Buat auto-responder baru.
@@ -89,7 +109,7 @@ Manage contact segments with custom colors.
 
 ---
 
-### 7. Webhooks (`/api/webhooks`)
+### 9. Webhooks (`/api/webhooks`)
 
 - **`GET /`**: Daftar webhook terdaftar.
 - **`POST /`**: Daftarkan URL webhook baru.
@@ -98,7 +118,7 @@ Manage contact segments with custom colors.
 
 ---
 
-### 8. Billing & Plans (`/api/billing`)
+### 10. Billing & Plans (`/api/billing`)
 
 - **`GET /plans`** (Publik): Daftar paket langganan yang tersedia.
 - **`POST /webhook`** (Publik): Endpoint untuk notifikasi Midtrans.
@@ -107,14 +127,14 @@ Manage contact segments with custom colors.
 
 ---
 
-### 9. Chats (`/api/chats`)
+### 11. Chats (`/api/chats`)
 
 - **`GET /`**: Daftar percakapan aktif.
 - **`GET /history`**: Riwayat pesan dalam percakapan tertentu.
 
 ---
 
-### 10. Admin Management (`/api/admin`)
+### 12. Admin Management (`/api/admin`)
 
 _Hanya dapat diakses oleh pengguna dengan role Admin._
 
