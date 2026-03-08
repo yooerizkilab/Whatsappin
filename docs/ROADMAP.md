@@ -16,5 +16,5 @@ Project ini dibangun dengan arsitektur skalabel sehingga sangat mudah untuk dike
 6. ~~**🔑 API Key Management for Developers**~~ (✅ Selesai)
    Menambahkan fitur pembuatan API Key di menu profil. API Key ini bersifat permanen (tidak expired seperti JWT), memudahkan integrasi script/server-side bagi customer (developer) tanpa perlu melakukan login berulang kali.
 
-7. **👤 My Profile Management**
+7. **👤 My Profile Management**~~ (✅ Selesai)
    Memungkinkan Admin dan Customer untuk memperbarui data profil mereka sendiri (Nama, Email, Password). Khusus untuk User/Customer, ditambahkan field nomor telepon untuk melengkapi identitas akun.
