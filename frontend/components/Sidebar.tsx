@@ -14,6 +14,7 @@ const navItems = [
   { href: '/blast', label: 'Blast', icon: '📢' },
   { href: '/auto-responder', label: 'Auto-Responder', icon: '🤖' },
   { href: '/chat', label: 'Live Chat', icon: '💬' },
+  { href: '/team', label: 'Team', icon: '👥' },
   { href: '/webhooks', label: 'Webhooks', icon: '🔗' },
   { href: '/billing', label: 'Billing', icon: '💳' },
   { href: '/logs', label: 'Message Logs', icon: '📋' },
@@ -49,6 +50,13 @@ export default function Sidebar() {
           .filter((item) => {
             // Admin doesn't need to see Billing menu as they have unlimited access
             if (user?.role === 'ADMIN' && item.href === '/billing') return false;
+
+            // AGENT restrictions: Hide management & billing
+            if (user?.role === 'AGENT') {
+              const restricted = ['/billing', '/webhooks', '/team', '/settings'];
+              if (restricted.includes(item.href)) return false;
+            }
+
             return true;
           })
           .map((item) => {

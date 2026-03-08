@@ -4,16 +4,16 @@ import { sessionManager } from '../baileys/sessionManager';
 
 export const deviceController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
-        const devices = await deviceRepository.findAll(userId);
+        const { ownerId } = request.user;
+        const devices = await deviceRepository.findAll(ownerId);
         return reply.send({ success: true, data: devices });
     },
 
     async connect(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
+        const { ownerId } = request.user;
         const { name } = request.body as { name: string };
 
-        const device = await deviceRepository.create({ userId, name });
+        const device = await deviceRepository.create({ userId: ownerId, name });
         await deviceRepository.updateStatus(device.id, 'CONNECTING');
 
         // Start Baileys session asynchronously
@@ -30,10 +30,10 @@ export const deviceController = {
 
     async disconnect(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.params as { id: string };
-        const { id: userId } = request.user as { id: string };
+        const { ownerId } = request.user;
 
         const device = await deviceRepository.findById(id);
-        if (!device || device.userId !== userId) {
+        if (!device || device.userId !== ownerId) {
             return reply.status(404).send({ success: false, message: 'Device not found' });
         }
 

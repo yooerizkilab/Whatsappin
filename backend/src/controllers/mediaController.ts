@@ -8,16 +8,16 @@ const pump = promisify(pipeline);
 
 export const mediaController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
         const media = await prisma.media.findMany({
-            where: { userId },
+            where: { userId: ownerId },
             orderBy: { createdAt: 'desc' }
         });
         return reply.send({ success: true, data: media });
     },
 
     async upload(request: FastifyRequest, reply: FastifyReply) {
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
         const data = await request.file();
 
         if (!data) {
@@ -43,7 +43,7 @@ export const mediaController = {
                 url: `${baseUrl}/uploads/${filename}`,
                 type: data.mimetype,
                 size: (data as any).file.bytesRead || 0, // approximation if not available in multipart
-                userId
+                userId: ownerId
             }
         });
 
@@ -52,13 +52,13 @@ export const mediaController = {
 
     async delete(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.params as { id: string };
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
 
         const media = await prisma.media.findUnique({
             where: { id }
         });
 
-        if (!media || media.userId !== userId) {
+        if (!media || media.userId !== ownerId) {
             return reply.status(404).send({ success: false, message: 'Media not found' });
         }
 

@@ -23,6 +23,7 @@ import { apiKeyRoutes } from './routes/apiKey.routes';
 import { analyticsRoutes } from './routes/analytics.routes';
 import { tagRoutes } from './routes/tag.routes';
 import { mediaRoutes } from './routes/media.routes';
+import { agentRoutes } from './routes/agent.routes';
 import { wsServer } from './websocket/wsServer';
 import { sessionManager } from './baileys/sessionManager';
 import { prisma } from './config/prisma';
@@ -86,6 +87,7 @@ async function buildServer() {
     fastify.register(analyticsRoutes, { prefix: '/analytics' });
     fastify.register(tagRoutes, { prefix: '/tags' });
     fastify.register(mediaRoutes, { prefix: '/media' });
+    fastify.register(agentRoutes, { prefix: '/agents' });
 
     // ── Error handler ─────────────────────────────────────────
     fastify.setErrorHandler(errorHandler);

@@ -201,3 +201,10 @@ export const mediaAPI = {
     },
     delete: (id: string) => api.delete(`/media/${id}`),
 };
+
+export const agentAPI = {
+    list: () => api.get('/agents'),
+    create: (data: any) => api.post('/agents', data),
+    update: (id: string, data: any) => api.put(`/agents/${id}`, data),
+    delete: (id: string) => api.delete(`/agents/${id}`),
+};

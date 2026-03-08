@@ -7,7 +7,7 @@ import { addRecipientJob } from '../queues/blastQueue';
 
 export const blastController = {
     async create(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
+        const { ownerId } = request.user;
         const {
             deviceId,
             templateId,
@@ -30,7 +30,7 @@ export const blastController = {
 
         // Create blast job
         const job = await blastRepository.createJob({
-            userId,
+            userId: ownerId,
             deviceId,
             templateId,
             name,
@@ -41,7 +41,7 @@ export const blastController = {
         });
 
         // Get contacts
-        const contacts = await contactRepository.findAll(userId, groupId);
+        const contacts = await contactRepository.findAll(ownerId, groupId);
         if (contacts.length === 0) {
             return reply.status(400).send({ success: false, message: 'No contacts found for blast' });
         }
@@ -57,10 +57,10 @@ export const blastController = {
         await blastRepository.createRecipients(recipients);
 
         // Limit Quota Increment (Skip if ADMIN)
-        const user = request.user as any;
-        if (user.role !== 'ADMIN') {
+        const { ownerId: currentOwnerId, role } = request.user;
+        if (role !== 'ADMIN') {
             await prisma.user.update({
-                where: { id: user.id },
+                where: { id: currentOwnerId },
                 data: { messagesSentThisMonth: { increment: recipients.length } }
             });
         }
@@ -90,8 +90,8 @@ export const blastController = {
     },
 
     async list(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
-        const jobs = await blastRepository.findJobsByUser(userId);
+        const { ownerId } = request.user;
+        const jobs = await blastRepository.findJobsByUser(ownerId);
         return reply.send({ success: true, data: jobs });
     },
 

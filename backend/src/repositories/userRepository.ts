@@ -14,7 +14,9 @@ export const userRepository = {
         email: string;
         password: string;
         name: string;
-        role?: 'ADMIN' | 'USER';
+        role?: 'ADMIN' | 'USER' | 'AGENT';
+        parentId?: string | null;
+        permissions?: any;
         subscriptionPlanId?: string;
         subscriptionStatus?: 'ACTIVE' | 'EXPIRED' | 'CANCELED';
     }) {

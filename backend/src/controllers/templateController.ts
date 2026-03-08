@@ -3,19 +3,19 @@ import { templateRepository } from '../repositories/templateRepository';
 
 export const templateController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
-        const templates = await templateRepository.findAll(userId);
+        const { ownerId } = request.user;
+        const templates = await templateRepository.findAll(ownerId);
         return reply.send({ success: true, data: templates });
     },
 
     async create(request: FastifyRequest, reply: FastifyReply) {
-        const { id: userId } = request.user as { id: string };
+        const { ownerId } = request.user;
         const { name, content, variables } = request.body as {
             name: string;
             content: string;
             variables?: string[];
         };
-        const template = await templateRepository.create({ userId, name, content, variables });
+        const template = await templateRepository.create({ userId: ownerId, name, content, variables });
         return reply.status(201).send({ success: true, data: template });
     },
 

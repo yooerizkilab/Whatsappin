@@ -4,13 +4,13 @@ import { startOfMonth, startOfDay, subDays, endOfDay } from 'date-fns';
 
 export const analyticsController = {
     async getSummary(request: FastifyRequest, reply: FastifyReply) {
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
         const now = new Date();
         const monthStart = startOfMonth(now);
 
         // Get total messages sent this month (for quota comparison)
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: ownerId },
             select: { messagesSentThisMonth: true }
         });
 
@@ -20,7 +20,7 @@ export const analyticsController = {
         const stats = await prisma.message.groupBy({
             by: ['status'],
             where: {
-                device: { userId },
+                device: { userId: ownerId },
                 createdAt: { gte: thirtyDaysAgo }
             },
             _count: {
@@ -54,7 +54,7 @@ export const analyticsController = {
     },
 
     async getChartData(request: FastifyRequest, reply: FastifyReply) {
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
         const days = 7; // Default to last 7 days for the main chart
         const now = new Date();
         const startDate = startOfDay(subDays(now, days - 1));
@@ -62,7 +62,7 @@ export const analyticsController = {
         // Fetch all messages in the range
         const messages = await prisma.message.findMany({
             where: {
-                device: { userId },
+                device: { userId: ownerId },
                 createdAt: { gte: startDate }
             },
             select: {
@@ -90,10 +90,10 @@ export const analyticsController = {
     },
 
     async getBlastStats(request: FastifyRequest, reply: FastifyReply) {
-        const userId = (request.user as any).id;
+        const { ownerId } = request.user;
 
         const blastJobs = await prisma.blastJob.findMany({
-            where: { userId },
+            where: { userId: ownerId },
             orderBy: { createdAt: 'desc' },
             take: 5,
             include: {

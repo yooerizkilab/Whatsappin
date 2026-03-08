@@ -20,6 +20,8 @@ model User {
   name      String
   phone     String?
   role      Role     @default(USER)
+  parentId  String?  @map("parent_id")
+  permissions Json?
   subscriptionPlanId    String?              @map("subscription_plan_id")
   subscriptionStatus    SubscriptionStatus   @default(EXPIRED) @map("subscription_status")
   subscriptionEndDate   DateTime?            @map("subscription_end_date")
@@ -37,6 +39,8 @@ model User {
   apiKeys             ApiKey[]
   tags                Tag[]
   media               Media[]
+  parent              User?                @relation("UserToAgent", fields: [parentId], references: [id], onDelete: SetNull)
+  agents              User[]               @relation("UserToAgent")
   subscriptionPlan    SubscriptionPlan?    @relation(fields: [subscriptionPlanId], references: [id])
   paymentTransactions PaymentTransaction[]
 
@@ -71,6 +75,7 @@ enum SubscriptionStatus {
 enum Role {
   ADMIN
   USER
+  AGENT
 }
 
 // ─────────────────────────────────────────────────────────

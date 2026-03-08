@@ -28,10 +28,10 @@ export const messageController = {
             await messageRepository.addLog(message.id, 'sent');
 
             // Increment kuota message user (Skip if ADMIN)
-            const user = request.user as any;
-            if (user.role !== 'ADMIN') {
+            const { ownerId, role } = request.user;
+            if (role !== 'ADMIN') {
                 await prisma.user.update({
-                    where: { id: user.id },
+                    where: { id: ownerId },
                     data: { messagesSentThisMonth: { increment: 1 } }
                 });
             }
@@ -52,7 +52,9 @@ export const messageController = {
             offset?: string;
         };
 
+        const { ownerId } = request.user;
         const messages = await messageRepository.findAll({
+            userId: ownerId,
             deviceId,
             status,
             limit: parseInt(limit, 10),

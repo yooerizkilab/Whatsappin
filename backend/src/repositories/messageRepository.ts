@@ -24,12 +24,13 @@ export const messageRepository = {
         });
     },
 
-    async findAll(filters: { deviceId?: string; status?: string; limit?: number; offset?: number }) {
-        const { deviceId, status, limit = 50, offset = 0 } = filters;
+    async findAll(filters: { userId?: string; deviceId?: string; status?: string; limit?: number; offset?: number }) {
+        const { userId, deviceId, status, limit = 50, offset = 0 } = filters;
         return prisma.message.findMany({
             where: {
                 ...(deviceId && { deviceId }),
                 ...(status && { status: status as any }),
+                ...(userId && { device: { userId } }),
             },
             include: { device: { select: { name: true } }, logs: true },
             orderBy: { createdAt: 'desc' },

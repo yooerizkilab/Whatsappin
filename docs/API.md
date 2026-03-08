@@ -69,6 +69,23 @@ Manage contact segments with custom colors.
 
 ---
 
+### Media
+
+- `GET /api/media` - List media items
+- `POST /api/media` - Upload media
+- `DELETE /api/media/:id` - Delete media
+
+---
+
+### Agents
+
+- `GET /api/agents` - List team members
+- `POST /api/agents` - Create agent
+- `PUT /api/agents/:id` - Update agent
+- `DELETE /api/agents/:id` - Delete agent
+
+---
+
 ### 5. Analytics Dashboard (`/api/analytics`)
 
 Statistik performa pesan dan kampanye.

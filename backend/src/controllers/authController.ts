@@ -17,7 +17,13 @@ export const authController = {
         }
 
         const token = await reply.jwtSign(
-            { id: user.id, email: user.email, role: user.role },
+            {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                parentId: (user as any).parentId,
+                permissions: (user as any).permissions
+            },
             { expiresIn: '7d' }
         );
 
@@ -25,7 +31,14 @@ export const authController = {
             success: true,
             data: {
                 token,
-                user: { id: user.id, email: user.email, name: user.name, role: user.role },
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    parentId: (user as any).parentId,
+                    permissions: (user as any).permissions
+                },
             },
         });
     },

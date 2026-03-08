@@ -16,14 +16,24 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
                 id: apiKey.user.id,
                 email: apiKey.user.email,
                 role: apiKey.user.role,
-                name: apiKey.user.name
+                name: apiKey.user.name,
+                ownerId: apiKey.user.id // API Keys are always primary user
             };
             return;
         }
     }
 
     try {
-        await request.jwtVerify();
+        const payload = await request.jwtVerify() as any;
+        request.user = {
+            id: payload.id,
+            email: payload.email,
+            role: payload.role,
+            name: payload.name || '',
+            parentId: payload.parentId,
+            ownerId: payload.parentId || payload.id,
+            permissions: payload.permissions
+        };
     } catch (err) {
         reply.status(401).send({ success: false, message: 'Unauthorized' });
     }
