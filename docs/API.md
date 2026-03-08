@@ -12,6 +12,8 @@ Seluruh API (kecuali rute publik) diamankan menggunakan salah satu metode beriku
     Header: `x-api-key: <api_key_anda>`
 
 > API Key dapat digenerate secara mandiri melalui menu **Settings** di Dashboard.
+>
+> 📖 **[Lihat Developer Guide](./DEVELOPER_GUIDE.md)** untuk panduan integrasi mendalam dan contoh kode.
 
 ### 1. Authentication (`/api/auth`)
 
