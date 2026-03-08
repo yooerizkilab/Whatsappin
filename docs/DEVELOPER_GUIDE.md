@@ -168,4 +168,7 @@ sendMessage();
 ## ⚠️ Batasan (Limits)
 
 1. **Kuota**: Tergantung pada paket langganan Anda. Cek kuota di `GET /billing/me`.
-2. **Rate Limit**: Disarankan untuk tidak mengirim lebih dari 1 pesan per detik untuk menghindari blokir dari WhatsApp.
+2. **Rate Limit (API)**:
+   - Maksimal **100 request per menit** per User/IP.
+   - Jika melampaui batas, server akan mengembalikan error `429 Too Many Requests`.
+3. **WhatsApp Safety**: Disarankan untuk tidak mengirim lebih dari 1 pesan per detik secara terus-menerus guna menghindari deteksi spam oleh sistem WhatsApp.

@@ -9,6 +9,8 @@ import fastifyWebsocket from '@fastify/websocket';
 import { errorHandler } from './middlewares/errorHandler';
 import fastifyStatic from '@fastify/static';
 import { authenticate } from './middlewares/auth';
+import rateLimit from '@fastify/rate-limit';
+import { redisConnection } from './config/redis';
 import { authRoutes } from './routes/auth.routes';
 import { deviceRoutes } from './routes/device.routes';
 import { messageRoutes } from './routes/message.routes';
@@ -49,6 +51,17 @@ async function buildServer() {
 
     await fastify.register(multipart, {
         limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    });
+
+    // ── Rate Limiter ─────────────────────────────────────────
+    await fastify.register(rateLimit, {
+        max: 100, // Default 100 requests
+        timeWindow: '1 minute',
+        redis: redisConnection,
+        keyGenerator: (request) => {
+            return (request.user as any)?.id || request.ip;
+        },
+        allowList: ['/ws', '/health', '/ping'],
     });
 
     // Expose authenticate decorator
