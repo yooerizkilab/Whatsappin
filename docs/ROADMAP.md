@@ -13,5 +13,8 @@ Project ini dibangun dengan arsitektur skalabel sehingga sangat mudah untuk dike
 5. ~~**🚀 Migrasi Queue ke Redis (BullMQ)**~~ (✅ Selesai)
    Mengganti sistem _Database-Queue_ bawaan dengan **Redis** (BullMQ). Kode lama yang menggunakan database queue telah dihapus sepenuhnya untuk efisiensi dan skalabilitas.
 
-6. **🔑 API Key Management for Developers**
+6. ~~**🔑 API Key Management for Developers**~~ (✅ Selesai)
    Menambahkan fitur pembuatan API Key di menu profil. API Key ini bersifat permanen (tidak expired seperti JWT), memudahkan integrasi script/server-side bagi customer (developer) tanpa perlu melakukan login berulang kali.
+
+7. **👤 My Profile Management**
+   Memungkinkan Admin dan Customer untuk memperbarui data profil mereka sendiri (Nama, Email, Password). Khusus untuk User/Customer, ditambahkan field nomor telepon untuk melengkapi identitas akun.

@@ -72,4 +72,40 @@ export const authController = {
         const { password: _, ...safe } = user;
         return reply.send({ success: true, data: safe });
     },
+
+    async updateProfile(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.user as { id: string };
+        const { name, email, phone } = request.body as { name?: string; email?: string; phone?: string };
+
+        // Check if email is already taken by another user
+        if (email) {
+            const existing = await userRepository.findByEmail(email);
+            if (existing && existing.id !== id) {
+                return reply.status(400).send({ success: false, message: 'Email already in use' });
+            }
+        }
+
+        const user = await userRepository.update(id, { name, email, phone });
+        const { password: _, ...safe } = user;
+        return reply.send({ success: true, message: 'Profile updated', data: safe });
+    },
+
+    async changePassword(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.user as { id: string };
+        const { currentPassword, newPassword } = request.body as {
+            currentPassword: string;
+            newPassword: string;
+        };
+
+        const user = await userRepository.findById(id);
+        if (!user) return reply.status(404).send({ success: false, message: 'User not found' });
+
+        const valid = await comparePassword(currentPassword, user.password);
+        if (!valid) {
+            return reply.status(400).send({ success: false, message: 'Invalid current password' });
+        }
+
+        await userRepository.updatePassword(id, newPassword);
+        return reply.send({ success: true, message: 'Password changed successfully' });
+    },
 };

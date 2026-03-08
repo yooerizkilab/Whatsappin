@@ -5,6 +5,7 @@ interface User {
     email: string;
     name: string;
     role: string;
+    phone?: string;
 }
 
 interface AuthState {
@@ -12,6 +13,7 @@ interface AuthState {
     token: string | null;
     isAuthenticated: boolean;
     setAuth: (user: User, token: string) => void;
+    setUser: (user: User) => void;
     logout: () => void;
     initFromStorage: () => void;
 }
@@ -25,6 +27,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.setItem('wa_token', token);
         localStorage.setItem('wa_user', JSON.stringify(user));
         set({ user, token, isAuthenticated: true });
+    },
+
+    setUser: (user) => {
+        localStorage.setItem('wa_user', JSON.stringify(user));
+        set({ user });
     },
 
     logout: () => {

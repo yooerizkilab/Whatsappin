@@ -23,4 +23,19 @@ export const userRepository = {
             data: { ...data, password: hashed },
         });
     },
+
+    async update(id: string, data: { email?: string; name?: string; phone?: string | null }) {
+        return prisma.user.update({
+            where: { id },
+            data,
+        });
+    },
+
+    async updatePassword(id: string, password: string) {
+        const hashed = await hashPassword(password);
+        return prisma.user.update({
+            where: { id },
+            data: { password: hashed },
+        });
+    },
 };

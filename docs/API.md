@@ -19,6 +19,8 @@ Seluruh API (kecuali rute publik) diamankan menggunakan salah satu metode beriku
 - **`POST /login`**: Mendapatkan token JWT.
   - Payload: `{ "email": "...", "password": "..." }`
 - **`GET /me`**: Mendapatkan profil pengguna yang sedang login.
+- **`PUT /profile`**: Memperbarui Nama, Email, dan No Telepon.
+- **`PUT /profile/password`**: Mengganti password user.
 
 ---
 
