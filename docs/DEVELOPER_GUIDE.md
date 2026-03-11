@@ -12,7 +12,6 @@ Semua permintaan API harus menyertakan Header `x-api-key`.
 4. Salin key tersebut dan simpan dengan aman.
 
 **Header Format:**
-
 ```http
 x-api-key: your_api_key_here
 Content-Type: application/json
@@ -20,155 +19,177 @@ Content-Type: application/json
 
 ---
 
-## 💬 1. Mengirim Pesan (Send Message)
+## 📱 1. Manage Devices (Perangkat)
 
-Endpoint ini digunakan untuk mengirim pesan tunggal secara real-time atau terjadwal.
+Sebelum mengirim pesan, Anda harus memastikan perangkat terhubung.
 
-- **URL:** `POST /v1/messages/send`
-- **Method:** `POST`
-
-### A. Pesan Teks (Teks Biasa)
-
-**Request Body:**
-
-```json
-{
-  "deviceId": "device_id_anda",
-  "to": "628123456789",
-  "type": "TEXT",
-  "content": "Halo, ini pesan dari API!"
-}
-```
-
-### B. Pesan Gambar / Dokumen
-
-**Request Body:**
-
-```json
-{
-  "deviceId": "device_id_anda",
-  "to": "628123456789",
-  "type": "IMAGE",
-  "content": "Lihat gambar ini",
-  "mediaUrl": "https://example.com/image.jpg"
-}
-```
-
-### C. Pesan Terjadwal (Scheduling)
-
-Tambahkan field `scheduledAt` dengan format ISO 8601.
-
-```json
-{
-  "deviceId": "device_id_anda",
-  "to": "628123456789",
-  "type": "TEXT",
-  "content": "Pesan ini akan dikirim besok",
-  "scheduledAt": "2026-03-09T09:00:00Z"
-}
-```
-
-**Response (Success):**
-
+### A. List Devices
+Melihat semua perangkat yang Anda miliki.
+*   **URL:** `GET /v1/devices`
+*   **Response:**
 ```json
 {
   "success": true,
-  "message": "Message sent successfully",
-  "data": {
-    "id": "msg_123456",
-    "status": "SENT"
-  }
+  "data": [
+    {
+      "id": "dev_123",
+      "name": "Marketing Phone",
+      "status": "CONNECTED",
+      "phoneNumber": "628123456789"
+    }
+  ]
 }
 ```
 
----
-
-## 📱 2. Cek Status Perangkat (Device Status)
-
-Pastikan perangkat WhatsApp Anda dalam status `CONNECTED` sebelum mengirim pesan.
-
-- **URL:** `GET /v1/devices/:id/status`
-- **Method:** `GET`
-
-**Response Example:**
-
+### B. Device Status
+Mengecek status spesifik satu perangkat.
+*   **URL:** `GET /v1/devices/:id/status`
+*   **Response:**
 ```json
 {
   "success": true,
   "data": {
     "status": "CONNECTED",
     "phoneNumber": "628123456789",
-    "pushName": "My Business WA"
+    "pushName": "Business WA"
   }
 }
 ```
 
 ---
 
-## 📊 3. Mengambil Log Pesan (Message Logs)
+## 💬 2. Mengirim Pesan (Messaging)
 
-Mengecek status pengiriman pesan yang sudah dikirim.
+### A. Pesan Teks
+*   **URL:** `POST /v1/messages/send`
+*   **Body:**
+```json
+{
+  "deviceId": "dev_123",
+  "to": "628123456789",
+  "type": "TEXT",
+  "content": "Halo Dunia!"
+}
+```
 
-- **URL:** `GET /v1/messages/logs`
-- **Method:** `GET`
-- **Query Params:** `deviceId`, `status`, `limit`, `offset`
+### B. Pesan Media (Gambar/Dokumen)
+*   **URL:** `POST /v1/messages/send`
+*   **Body:**
+```json
+{
+  "deviceId": "dev_123",
+  "to": "628123456789",
+  "type": "IMAGE",
+  "content": "Caption gambar",
+  "mediaUrl": "https://example.com/image.jpg"
+}
+```
 
-**Contoh Request:** `/v1/messages/logs?status=FAILED&limit=10`
+### C. Pesan Terjadwal (Scheduling)
+Gunakan format ISO 8601 untuk `scheduledAt`.
+*   **Body:**
+```json
+{
+  "deviceId": "dev_123",
+  "to": "628123456789",
+  "type": "TEXT",
+  "content": "Pesan terjadwal",
+  "scheduledAt": "2026-03-20T10:00:00Z"
+}
+```
 
 ---
 
-## 💻 Contoh Implementasi (Code Examples)
+## 👥 3. Kontak & Grup (Contacts)
 
-### Menggunakan cURL
-
-```bash
-curl -X POST http://localhost:3001/v1/messages/send \
-  -H "x-api-key: your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "deviceId": "123",
-    "to": "628123456789",
-    "type": "TEXT",
-    "content": "Hello World"
-  }'
+### A. Tambah Kontak
+*   **URL:** `POST /v1/contacts`
+*   **Body:**
+```json
+{
+  "name": "Budi",
+  "phone": "6285211223344",
+  "email": "budi@mail.com",
+  "groupId": "group_abc"
+}
 ```
 
-### Menggunakan Node.js (Axios)
+### B. List Groups
+*   **URL:** `GET /v1/contacts/groups`
+
+---
+
+## 📝 4. Message Templates
+
+Gunakan template untuk standarisasi pesan.
+*   **List Templates:** `GET /v1/templates`
+*   **Create Template:** `POST /v1/templates`
+```json
+{
+  "name": "OTP Template",
+  "content": "Kode OTP Anda adalah: {{code}}"
+}
+```
+
+---
+
+## 🔗 5. Webhooks
+
+Dapatkan notifikasi real-time saat ada pesan masuk atau perubahan status.
+*   **Register Webhook:** `POST /v1/webhooks`
+*   **Body:**
+```json
+{
+  "url": "https://your-server.com/callback",
+  "secret": "my_secret_key"
+}
+```
+*Sistem akan mengirimkan POST request ke URL tersebut dengan signature HMAC SHA256.*
+
+---
+
+## 💳 6. Billing & Quota
+
+Mengecek penggunaan dan sisa kuota.
+*   **URL:** `GET /v1/billing/me`
+*   **Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "plan": "Pro",
+    "messagesSentThisMonth": 450,
+    "maxMessagesPerMonth": 5000,
+    "deviceQuota": 5,
+    "devicesUsed": 2
+  }
+}
+```
+
+---
+
+## 💻 Contoh Implementasi (Node.js)
 
 ```javascript
 const axios = require("axios");
 
-const sendMessage = async () => {
-  try {
-    const response = await axios.post(
-      "http://localhost:3001/v1/messages/send",
-      {
-        deviceId: "your_device_id",
-        to: "628123456789",
-        type: "TEXT",
-        content: "Hello from Node.js",
-      },
-      {
-        headers: {
-          "x-api-key": "your_api_key",
-        },
-      },
-    );
-    console.log(response.data);
-  } catch (error) {
-    console.error(error.response.data);
-  }
-};
+const api = axios.create({
+  baseURL: "http://localhost:3001/v1",
+  headers: { "x-api-key": "your_api_key" }
+});
 
-sendMessage();
+async function send() {
+  const res = await api.post("/messages/send", {
+    deviceId: "your_id",
+    to: "62812...",
+    content: "Hi!"
+  });
+  console.log(res.data);
+}
 ```
 
 ---
 
 ## ⚠️ Batasan (Limits)
-
-1. **Kuota**: Tergantung pada paket langganan Anda. Cek kuota di `GET /v1/billing/me`.
-2. **Rate Limit (API)**:
-   - Maksimal **100 request per menit** per User/IP.
-   - Jika melampaui batas, server akan mengembalikan error `429 Too Many Requests`.
-3. **WhatsApp Safety**: Disarankan untuk tidak mengirim lebih dari 1 pesan per detik secara terus-menerus guna menghindari deteksi spam oleh sistem WhatsApp.
+1. **Rate Limit**: 100 req/min.
+2. **Safety**: Jeda antar pesan minimal 3-5 detik sangat disarankan.
