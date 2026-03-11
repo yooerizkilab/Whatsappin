@@ -197,7 +197,7 @@ class SessionManager {
 
                     // Auto-responder
                     if (text) {
-                        await this.handleAutoRespond(deviceId, from, text, msg.key);
+                        await this.handleAutoRespond(deviceId, from, text, msg);
                     }
                 }
             }
@@ -289,7 +289,7 @@ class SessionManager {
      * 1. Match keyword rules (sorted by order).
      * 2. If no match and AI is configured → call AI and reply.
      */
-    async handleAutoRespond(deviceId: string, from: string, text: string, key: proto.IMessageKey): Promise<void> {
+    async handleAutoRespond(deviceId: string, from: string, text: string, msg: proto.IWebMessageInfo): Promise<void> {
         try {
             const autoResponder = await autoResponderRepository.findActiveByDeviceId(deviceId);
             if (!autoResponder) {
@@ -317,15 +317,23 @@ class SessionManager {
             // ── Read Receipt & Typing ─────────────────────────────
             const session = this.sessions.get(deviceId);
             if (session) {
-                await session.socket.readMessages([key]);
+                // If it's a group, only respond if mentioned
+                const isGroup = from.endsWith('@g.us');
+                if (isGroup) {
+                    const myId = session.socket.user?.id.split(':')[0] + '@s.whatsapp.net';
+                    const mentionedJids = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                    const isMentioned = mentionedJids.includes(myId);
+
+                    if (!isMentioned) {
+                        // console.log(`[AutoResponder] Skipping group message from ${from} (not mentioned)`);
+                        return;
+                    }
+                }
+
+                await session.socket.readMessages([msg.key]);
                 await session.socket.sendPresenceUpdate('composing', from);
             }
 
-            // Skip groups to avoid loops/chaos (unless requested otherwise)
-            if (from.endsWith('@g.us')) {
-                // console.log(`[AutoResponder] Skipping group message from ${from}`);
-                return;
-            }
 
             const normalizedText = text.trim().toLowerCase();
             let replied = false;
