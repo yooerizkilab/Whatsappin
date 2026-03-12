@@ -53,6 +53,12 @@ const AI_PROVIDERS = [
   },
 ];
 
+const AI_PROVIDER_LABELS: Record<string, string> = {
+  openai: 'OpenAI',
+  anthropic: 'Anthropic',
+  gemini: 'Google Gemini',
+};
+
 // ── Main Page ─────────────────────────────────────────────
 export default function AutoResponderDetailPage() {
   const { id } = useParams() as { id: string };
@@ -329,18 +335,17 @@ export default function AutoResponderDetailPage() {
 
           <div>
             <label className="block text-sm text-gray-400 mb-1.5 flex items-center gap-2">
-              API Key
-              {/* <span className="text-[10px] text-brand-400 bg-brand-900/40 px-1.5 rounded border border-brand-800">Opsional</span> */}
+              {aiForm.aiProvider ? AI_PROVIDER_LABELS[aiForm.aiProvider] : 'AI'} API Key
             </label>
             <input
               type="password"
               className="input w-full"
-              placeholder="Masukkan API Key khusus untuk device ini (opsional)"
+              placeholder={`Masukkan API Key ${aiForm.aiProvider ? AI_PROVIDER_LABELS[aiForm.aiProvider] : ''} khusus untuk device ini`}
               value={aiForm.apiKey}
               onChange={(e) => setAiForm({ ...aiForm, apiKey: e.target.value })}
             />
             <p className="text-[10px] text-gray-600 mt-1">
-              Jika diisi, model akan menggunakan key ini. Jika kosong, akan menggunakan key default dari file <code>.env</code> server.
+              Jika diisi, model akan menggunakan key ini. Jika kosong, akan menggunakan key default dari server.
             </p>
           </div>
 
