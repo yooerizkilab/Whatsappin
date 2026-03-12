@@ -43,6 +43,7 @@ model User {
   autoResponders      AutoResponder[]
   webhooks            Webhook[]
   apiKeys             ApiKey[]
+  knowledgeBases      KnowledgeBase[]
   tags                Tag[]
   media               Media[]
   parent              User?                @relation("UserToAgent", fields: [parentId], references: [id], onDelete: SetNull)
@@ -102,6 +103,7 @@ model Device {
   blastJobs     BlastJob[]
   autoResponder AutoResponder?
   webhook       Webhook?
+  knowledgeBase KnowledgeBase?
 
   @@index([userId])
   @@index([status])
@@ -442,6 +444,56 @@ model PaymentTransaction {
   @@index([userId])
   @@index([planId])
   @@map("payment_transactions")
+}
+
+// ─────────────────────────────────────────────────────────
+// KNOWLEDGE BASE (AI SALES AGENT)
+// ─────────────────────────────────────────────────────────
+model KnowledgeBase {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  deviceId  String   @unique @map("device_id")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device  Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  sources KnowledgeSource[]
+
+  @@index([userId])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeSource {
+  id              String   @id @default(uuid())
+  knowledgeBaseId String   @map("knowledge_base_id")
+  type            String   // URL | FILE | TEXT
+  content         String?  @db.LongText // Raw content if manual text
+  url             String?  @db.Text
+  status          String   @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks        KnowledgeChunk[]
+
+  @@index([knowledgeBaseId])
+  @@map("knowledge_sources")
+}
+
+model KnowledgeChunk {
+  id                String   @id @default(uuid())
+  knowledgeSourceId String   @map("knowledge_source_id")
+  content           String   @db.Text
+  embedding         Json?    // Array of floats
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  source KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeSourceId])
+  @@map("knowledge_chunks")
 }
 
 enum PaymentStatus {

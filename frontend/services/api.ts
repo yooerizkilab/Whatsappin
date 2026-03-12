@@ -223,3 +223,11 @@ export const agentAPI = {
     update: (id: string, data: any) => api.put(`/agents/${id}`, data),
     delete: (id: string) => api.delete(`/agents/${id}`),
 };
+
+export const knowledgeAPI = {
+    get: (deviceId: string) => api.get(`/knowledge/${deviceId}`),
+    create: (data: { deviceId: string; name: string }) => api.post('/knowledge', data),
+    addSource: (data: { kbId: string; type: 'URL' | 'TEXT'; url?: string; content?: string }) =>
+        api.post('/knowledge/sources', data),
+    deleteSource: (id: string) => api.delete(`/knowledge/sources/${id}`),
+};

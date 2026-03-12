@@ -28,28 +28,48 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delay = 2000): Pr
     }
 }
 
+import { knowledgeService } from './knowledgeService';
+
+// ... (withRetry remains same)
+
 /**
  * Call an AI provider with the given message and return the text response.
  * Includes a fallback mechanism if the primary provider fails due to quota limits.
+ * Supports RAG by providing a knowledgeBaseId.
  */
 export async function callAI(
     provider: string,
     model: string,
     systemPrompt: string,
     userMessage: string,
-    dynamicApiKey?: string | null
+    dynamicApiKey?: string | null,
+    knowledgeBaseId?: string | null
 ): Promise<string> {
+    let finalSystemPrompt = systemPrompt;
+
+    // RAG: Fetch relevant context if Knowledge Base is enabled
+    if (knowledgeBaseId) {
+        try {
+            const context = await knowledgeService.getRelevantContext(knowledgeBaseId, userMessage);
+            if (context) {
+                finalSystemPrompt = `You are an AI Sales Agent. Use the following BUSINESS KNOWLEDGE to answer the user's question accurately. If the answer is not in the knowledge base, reply politely based on general knowledge or ask for clarification.\n\n[BUSINESS KNOWLEDGE]:\n${context}\n\n[INSTRUCTIONS]:\n${systemPrompt}`;
+            }
+        } catch (e) {
+            logger.error('[AI] RAG retrieval failed:', e);
+        }
+    }
+
     try {
         // Try the primary provider with retries for transient errors
         return await withRetry(async () => {
             switch (provider.toLowerCase()) {
                 case 'openai':
-                    return callOpenAI(model, systemPrompt, userMessage, dynamicApiKey);
+                    return callOpenAI(model, finalSystemPrompt, userMessage, dynamicApiKey);
                 case 'anthropic':
-                    return callAnthropic(model, systemPrompt, userMessage, dynamicApiKey);
+                    return callAnthropic(model, finalSystemPrompt, userMessage, dynamicApiKey);
                 case 'gemini':
                 default:
-                    return callGemini(model, systemPrompt, userMessage, dynamicApiKey);
+                    return callGemini(model, finalSystemPrompt, userMessage, dynamicApiKey);
             }
         });
     } catch (error: any) {

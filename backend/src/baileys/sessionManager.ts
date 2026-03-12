@@ -384,12 +384,18 @@ class SessionManager {
             // ── 2. AI fallback ─────────────────────────────────────
             if (!replied && autoResponder.aiProvider) {
                 // logger.debug(`[AutoResponder] No keyword matched. Falling back to AI (${autoResponder.aiProvider})...`);
+                
+                // Get Knowledge Base ID if active
+                const device: any = autoResponder.device;
+                const kbId = device?.knowledgeBase?.isActive ? device.knowledgeBase.id : null;
+
                 const aiReply = await callAI(
                     autoResponder.aiProvider,
                     autoResponder.aiModel || '',
                     autoResponder.systemPrompt || 'You are a helpful WhatsApp assistant. Reply concisely.',
                     text,
-                    autoResponder.apiKey
+                    autoResponder.apiKey,
+                    kbId
                 );
                 await this.sendTextMessage(deviceId, from, aiReply);
                 logger.info(`[AutoResponder] AI (${autoResponder.aiProvider}) replied to: "${text}"`);

@@ -26,6 +26,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { href: '/send', label: t('send_message'), icon: '💬' },
     { href: '/blast', label: t('blast'), icon: '📢' },
     { href: '/auto-responder', label: t('autoResponder'), icon: '🤖' },
+    { href: '/knowledge', label: t('aiAgent'), icon: '🧠' },
     { href: '/chat', label: t('chat'), icon: '💬' },
     { href: '/team', label: t('team'), icon: '👥' },
     { href: '/webhooks', label: t('webhooks'), icon: '🔗' },

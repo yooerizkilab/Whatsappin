@@ -28,6 +28,14 @@ export const autoResponderRepository = {
         return prisma.autoResponder.findFirst({
             where: { deviceId, isActive: true },
             include: {
+                device: {
+                    select: {
+                        id: true,
+                        knowledgeBase: {
+                            select: { id: true, isActive: true }
+                        }
+                    }
+                },
                 rules: { where: { isActive: true }, orderBy: { order: 'asc' } },
                 user: { select: { id: true, messagesSentThisMonth: true, subscriptionStatus: true, subscriptionPlan: true } }
             },

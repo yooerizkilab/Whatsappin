@@ -27,6 +27,7 @@ import { analyticsRoutes } from './routes/analytics.routes';
 import { tagRoutes } from './routes/tag.routes';
 import { mediaRoutes } from './routes/media.routes';
 import { agentRoutes } from './routes/agent.routes';
+import { knowledgeRoutes } from './routes/knowledge.routes';
 import { wsServer } from './websocket/wsServer';
 import { sessionManager } from './baileys/sessionManager';
 import { prisma } from './config/prisma';
@@ -103,6 +104,7 @@ async function buildServer() {
         v1.register(tagRoutes, { prefix: '/tags' });
         v1.register(mediaRoutes, { prefix: '/media' });
         v1.register(agentRoutes, { prefix: '/agents' });
+        v1.register(knowledgeRoutes, { prefix: '/knowledge' });
     }, { prefix: '/v1' });
 
     // ── Error handler ─────────────────────────────────────────
