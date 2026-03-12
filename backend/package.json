@@ -1,5 +1,5 @@
 {
-  "name": "whatsapp-gateway-backend",
+  "name": "whatsappin-backend",
   "version": "1.0.0",
   "description": "WhatsApp Gateway Backend API",
   "main": "dist/server.js",

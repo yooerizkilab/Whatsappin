@@ -1,6 +1,6 @@
-# 🚀 WhatsApp Gateway Documentation
+# 🚀 Whatsappin Documentation
 
-Selamat datang di dokumentasi resmi **WhatsApp Gateway (SaaS)**. Sistem ini dirancang untuk menyediakan layanan pengiriman pesan WhatsApp yang skalabel, aman, dan mudah diintegrasikan dengan berbagai platform melalui REST API dan Webhook.
+Selamat datang di dokumentasi resmi **Whatsappin (SaaS)**. Sistem ini dirancang untuk menyediakan layanan pengiriman pesan WhatsApp yang skalabel, aman, dan mudah diintegrasikan dengan berbagai platform melalui REST API dan Webhook.
 
 ---
 

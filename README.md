@@ -1,4 +1,4 @@
-# WhatsApp Gateway
+# Whatsappin
 
 Sistem WhatsApp Gateway (SaaS) full-stack yang dibangun menggunakan **Node.js, Fastify, Prisma, Baileys** (Backend) dan **Next.js, TailwindCSS** (Frontend).
 
