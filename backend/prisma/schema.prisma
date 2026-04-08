@@ -26,8 +26,6 @@ model User {
   subscriptionStatus    SubscriptionStatus   @default(EXPIRED) @map("subscription_status")
   subscriptionEndDate   DateTime?            @map("subscription_end_date")
   messagesSentThisMonth Int                  @default(0) @map("messages_sent_this_month")
-  createdAt             DateTime             @default(now()) @map("created_at")
-  updatedAt             DateTime             @updatedAt @map("updated_at")
   
   // Working Hours & Scheduling
   workingHoursEnabled   Boolean              @default(false) @map("working_hours_enabled")
@@ -50,6 +48,9 @@ model User {
   agents              User[]               @relation("UserToAgent")
   subscriptionPlan    SubscriptionPlan?    @relation(fields: [subscriptionPlanId], references: [id])
   paymentTransactions PaymentTransaction[]
+  
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
 
   @@index([email])
   @@map("users")
@@ -95,8 +96,6 @@ model Device {
   phoneNumber String?      @map("phone_number")
   status      DeviceStatus @default(DISCONNECTED)
   sessionPath String?      @map("session_path")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages      Message[]
@@ -104,6 +103,9 @@ model Device {
   autoResponder AutoResponder?
   webhook       Webhook?
   knowledgeBase KnowledgeBase?
+
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([status])

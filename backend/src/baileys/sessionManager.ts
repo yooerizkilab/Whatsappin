@@ -19,6 +19,7 @@ import { webhookRepository } from '../repositories/webhookRepository';
 import { webhookService } from '../services/webhookService';
 import { messageRepository } from '../repositories/messageRepository';
 import { logger } from '../utils/logger';
+import { useS3AuthState, deleteS3Session } from './s3AuthState';
 
 export interface DeviceSession {
     socket: WASocket;
@@ -47,11 +48,20 @@ class SessionManager {
 
         const sessionPath = path.join(env.SESSION_DIR, deviceId);
 
-        if (!fs.existsSync(sessionPath)) {
-            fs.mkdirSync(sessionPath, { recursive: true });
+        let state, saveCreds;
+        if (env.AWS_S3_BUCKET) {
+            const s3Auth = await useS3AuthState(deviceId);
+            state = s3Auth.state;
+            saveCreds = s3Auth.saveCreds;
+        } else {
+            const sessionPath = path.join(env.SESSION_DIR, deviceId);
+            if (!fs.existsSync(sessionPath)) {
+                fs.mkdirSync(sessionPath, { recursive: true });
+            }
+            const localAuth = await useMultiFileAuthState(sessionPath);
+            state = localAuth.state;
+            saveCreds = localAuth.saveCreds;
         }
-
-        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
         const { version } = await fetchLatestBaileysVersion();
 
         const socket = makeWASocket({
@@ -133,8 +143,14 @@ class SessionManager {
                 } else {
                     this.sessions.delete(deviceId);
                     // clear session files on logout
-                    const sessionPath = path.join(env.SESSION_DIR, deviceId);
-                    fs.rmSync(sessionPath, { recursive: true, force: true });
+                    if (env.AWS_S3_BUCKET) {
+                        await deleteS3Session(deviceId);
+                    } else {
+                        const sessionPath = path.join(env.SESSION_DIR, deviceId);
+                        if (fs.existsSync(sessionPath)) {
+                            fs.rmSync(sessionPath, { recursive: true, force: true });
+                        }
+                    }
                 }
             }
         });
@@ -269,9 +285,14 @@ class SessionManager {
             }
             this.sessions.delete(deviceId);
         }
-        const sessionPath = path.join(env.SESSION_DIR, deviceId);
-        if (fs.existsSync(sessionPath)) {
-            fs.rmSync(sessionPath, { recursive: true, force: true });
+        
+        if (env.AWS_S3_BUCKET) {
+            await deleteS3Session(deviceId);
+        } else {
+            const sessionPath = path.join(env.SESSION_DIR, deviceId);
+            if (fs.existsSync(sessionPath)) {
+                fs.rmSync(sessionPath, { recursive: true, force: true });
+            }
         }
     }
 

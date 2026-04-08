@@ -32,6 +32,7 @@ import { wsServer } from './websocket/wsServer';
 import { sessionManager } from './baileys/sessionManager';
 import { prisma } from './config/prisma';
 import { startBlastWorker } from './workers/blastWorker';
+import { startCronWorker } from './workers/cronWorker';
 import { logger } from './utils/logger';
 
 async function buildServer() {
@@ -126,9 +127,11 @@ async function start() {
         await sessionManager.restoreAllSessions();
         logger.info(`WhatsApp sessions restored`);
 
-        // ── Start Blast Worker ────────────────────────────────
+        // ── Start Workers ────────────────────────────────
         await startBlastWorker();
         logger.info(`Blast worker started`);
+
+        await startCronWorker();
 
         logger.info(`Server running at http://${env.HOST}:${env.PORT}`);
     } catch (err) {

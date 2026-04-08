@@ -1,12 +1,20 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../config/prisma';
 import { startOfMonth, startOfDay, subDays, endOfDay } from 'date-fns';
+import { redisConnection } from '../config/redis';
 
 export const analyticsController = {
     async getSummary(request: FastifyRequest, reply: FastifyReply) {
         const { ownerId } = request.user;
         const now = new Date();
         const monthStart = startOfMonth(now);
+
+        const cacheKey = `analytics:summary:${ownerId}`;
+        const cachedSummary = await redisConnection.get(cacheKey);
+        
+        if (cachedSummary) {
+            return reply.send({ success: true, data: JSON.parse(cachedSummary) });
+        }
 
         // Get total messages sent this month (for quota comparison)
         const user = await prisma.user.findUnique({
@@ -44,12 +52,17 @@ export const analyticsController = {
 
         const successRate = totalOutgoing > 0 ? (successCount / totalOutgoing) * 100 : 0;
 
+        const responseData = {
+            ...summary,
+            successRate: Math.round(successRate * 10) / 10
+        };
+
+        // Cache for 300 seconds (5 minutes)
+        await redisConnection.setex(cacheKey, 300, JSON.stringify(responseData));
+
         return reply.send({
             success: true,
-            data: {
-                ...summary,
-                successRate: Math.round(successRate * 10) / 10
-            }
+            data: responseData
         });
     },
 
