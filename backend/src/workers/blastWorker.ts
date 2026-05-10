@@ -30,6 +30,17 @@ export async function startBlastWorker() {
             const blastJob = recipient.blastJob as any;
             const device = blastJob?.device;
 
+            if (recipient.status !== 'PENDING') {
+                logger.info(`[Worker] Skipping recipient ${recipient.id}; status is ${recipient.status}`);
+                return;
+            }
+
+            const claim = await blastRepository.markRecipientProcessing(recipient.id);
+            if (claim.count === 0) {
+                logger.info(`[Worker] Recipient ${recipient.id} was already claimed by another worker/job`);
+                return;
+            }
+
             if (!device) {
                 await blastRepository.updateRecipientStatus(recipient.id, 'FAILED', 'Device not found');
                 return;

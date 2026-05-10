@@ -50,6 +50,13 @@ export const blastRepository = {
     },
 
 
+    async markRecipientProcessing(id: string) {
+        return prisma.blastRecipient.updateMany({
+            where: { id, status: 'PENDING' },
+            data: { status: 'PROCESSING' as any },
+        });
+    },
+
     async updateRecipientStatus(id: string, status: 'SENT' | 'FAILED', error?: string, sentAt?: Date) {
         const recipient = await prisma.blastRecipient.update({
             where: { id },

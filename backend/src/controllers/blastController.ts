@@ -4,6 +4,7 @@ import { contactRepository } from '../repositories/contactRepository';
 import { resolveTemplate } from '../utils/csvParser';
 import { prisma } from '../config/prisma';
 import { addRecipientJob } from '../queues/blastQueue';
+import { normalizePhone } from '../utils/phone';
 
 export const blastController = {
     async create(request: FastifyRequest, reply: FastifyReply) {
@@ -47,7 +48,14 @@ export const blastController = {
         }
 
         // Create recipient queue rows
-        const recipients = contacts.map((c: any) => ({
+        const uniqueContactsByPhone = new Map<string, any>();
+        for (const contact of contacts) {
+            const normalizedPhone = normalizePhone(contact.phone);
+            if (!normalizedPhone || uniqueContactsByPhone.has(normalizedPhone)) continue;
+            uniqueContactsByPhone.set(normalizedPhone, { ...contact, phone: normalizedPhone });
+        }
+
+        const recipients = Array.from(uniqueContactsByPhone.values()).map((c: any) => ({
             blastJobId: job.id,
             contactId: c.id,
             phone: c.phone,

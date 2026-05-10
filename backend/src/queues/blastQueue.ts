@@ -18,6 +18,9 @@ export const addRecipientJob = async (recipientId: string, delayMs?: number) => 
     await blastQueue.add(
         'process-recipient',
         { recipientId },
-        { delay: delayMs || 0 }
+        {
+            delay: delayMs || 0,
+            jobId: `blast-recipient-${recipientId}`,
+        }
     );
 };
