@@ -87,6 +87,10 @@ export const blastRepository = {
         });
     },
 
+    async deleteJob(id: string) {
+        return prisma.blastJob.delete({ where: { id } });
+    },
+
     async countRecipients(blastJobId: string) {
         const job = await prisma.blastJob.findUnique({
             where: { id: blastJobId },

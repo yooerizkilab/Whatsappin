@@ -149,4 +149,16 @@ export const blastController = {
         const counts = await blastRepository.countRecipients(id);
         return reply.send({ success: true, data: { ...job, stats: counts } });
     },
+
+    async deleteJob(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const { ownerId } = request.user;
+
+        const job = await blastRepository.findJobById(id);
+        if (!job) return reply.status(404).send({ success: false, message: 'Blast job not found' });
+        if (job.userId !== ownerId) return reply.status(403).send({ success: false, message: 'Forbidden' });
+
+        await blastRepository.deleteJob(id);
+        return reply.send({ success: true, message: 'Blast job deleted' });
+    },
 };

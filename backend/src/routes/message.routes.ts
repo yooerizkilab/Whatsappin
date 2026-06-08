@@ -12,4 +12,5 @@ export async function messageRoutes(fastify: FastifyInstance) {
     fastify.post('/blast', { preHandler: [quotaMiddleware.checkMessageQuota] }, blastController.create);
     fastify.get('/blast', blastController.list);
     fastify.get('/blast/:id', blastController.getJob);
+    fastify.delete('/blast/:id', blastController.deleteJob);
 }
