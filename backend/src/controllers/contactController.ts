@@ -109,14 +109,14 @@ export const contactController = {
             });
         }
 
-        // Strip extra CSV fields (group, link) — only pass what Prisma expects
+        // Strip extra CSV fields — only pass what Prisma expects
         const dbContacts = validContacts.map(c => ({
             userId: c.userId,
             name: c.name,
             phone: c.phone,
-            email: c.email,
-            groupId: c.groupId,
-            metadata: c.metadata,
+            ...(c.email ? { email: c.email } : {}),
+            ...(c.groupId ? { groupId: c.groupId } : {}),
+            ...(c.metadata ? { metadata: c.metadata } : {}),
         }));
         const result = await contactRepository.createMany(dbContacts);
 
