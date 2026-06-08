@@ -65,7 +65,7 @@ export const contactController = {
         const data = await request.file();
         if (!data) return reply.status(400).send({ success: false, message: 'No file uploaded' });
 
-        const groupId = (request.query as any).groupId;
+        const groupIdOverride = (request.query as any).groupId;
         const buffer = await data.toBuffer();
         const parsed = parseCsvContacts(buffer);
 
@@ -74,20 +74,67 @@ export const contactController = {
         }
 
         // Normalize and filter valid ones
-        const validContacts = parsed
+        type CsvImportRow = ReturnType<typeof parseCsvContacts>[number] & { phone: string; userId: string; groupId?: string };
+        const validContacts: CsvImportRow[] = parsed
             .filter(c => isValidPhone(c.phone))
             .map(c => ({
                 ...c,
                 phone: normalizePhone(c.phone),
                 userId: ownerId,
-                groupId
             }));
 
         if (validContacts.length === 0) {
             return reply.status(400).send({ success: false, message: 'No valid international phone numbers found in CSV' });
         }
 
-        const result = await contactRepository.createMany(validContacts);
+        // Auto-resolve groups from CSV column if present and no query param override
+        const groupMap = new Map<string, string>();
+        if (groupIdOverride) {
+            // Query param groupId takes precedence — apply to all contacts
+            validContacts.forEach(c => c.groupId = groupIdOverride);
+        } else if (validContacts.some(c => c.group)) {
+            // Resolve unique group names from CSV and find-or-create
+            const uniqueGroups = [...new Set(validContacts.map(c => c.group).filter(Boolean))] as string[];
+            for (const groupName of uniqueGroups) {
+                let group = await contactRepository.findGroupByName(ownerId, groupName);
+                if (!group) {
+                    group = await contactRepository.createGroup(ownerId, groupName);
+                }
+                groupMap.set(groupName, group.id);
+            }
+            validContacts.forEach(c => {
+                if (c.group && groupMap.has(c.group)) {
+                    c.groupId = groupMap.get(c.group);
+                }
+            });
+        }
+
+        // Strip extra CSV fields (group, link) — only pass what Prisma expects
+        const dbContacts = validContacts.map(c => ({
+            userId: c.userId,
+            name: c.name,
+            phone: c.phone,
+            email: c.email,
+            groupId: c.groupId,
+        }));
+        const result = await contactRepository.createMany(dbContacts);
+
+        // If groupId(s) assigned, ensure all imported phones (including skipped duplicates)
+        // are assigned to the group. createMany uses skipDuplicates, so existing
+        // contacts won't be updated by it — update them explicitly.
+        const phonesWithGroup = validContacts.filter(c => c.groupId);
+        if (phonesWithGroup.length > 0) {
+            // Group by groupId and update each batch
+            const groups = new Map<string, string[]>();
+            for (const c of phonesWithGroup) {
+                const list = groups.get(c.groupId!) || [];
+                list.push(c.phone);
+                groups.set(c.groupId!, list);
+            }
+            for (const [gId, phones] of groups) {
+                await contactRepository.assignGroupToPhones(ownerId, phones, gId);
+            }
+        }
 
         return reply.send({
             success: true,

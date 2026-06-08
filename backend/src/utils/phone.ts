@@ -31,5 +31,11 @@ export const isValidPhone = (phone: string, defaultCountry = 'ID'): boolean => {
     if (phoneNumber && phoneNumber.isValid()) return true;
 
     const phoneNumberFallback = parsePhoneNumberFromString(phone, defaultCountry as any);
-    return !!(phoneNumberFallback && phoneNumberFallback.isValid());
+    if (phoneNumberFallback && phoneNumberFallback.isValid()) return true;
+
+    // Relaxed fallback: accept if digit length looks reasonable (10-16)
+    // Covers Indonesian numbers (62 + 8-14 subscriber digits) and various intl formats
+    // seperti nomor WA Indonesia yang bisa 10-15 digit (628xx...)
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 10 && digits.length <= 16;
 };

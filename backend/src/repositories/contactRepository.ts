@@ -52,11 +52,20 @@ export const contactRepository = {
         return prisma.contactGroup.findMany({ where: { userId }, orderBy: { name: 'asc' } });
     },
 
+    async findGroupByName(userId: string, name: string) {
+        return prisma.contactGroup.findFirst({ where: { userId, name } });
+    },
+
     async createGroup(userId: string, name: string) {
         return prisma.contactGroup.create({ data: { userId, name } });
     },
 
     async countByGroup(groupId: string) {
         return prisma.contact.count({ where: { groupId } });
+    },
+
+    async assignGroupToPhones(userId: string, phones: string[], groupId: string) {
+        if (!groupId || phones.length === 0) return { count: 0 } as any;
+        return prisma.contact.updateMany({ where: { userId, phone: { in: phones } }, data: { groupId } });
     },
 };

@@ -4,6 +4,8 @@ export interface CsvContact {
     name: string;
     phone: string;
     email?: string;
+    group?: string;
+    link?: string;
 }
 
 export function parseCsvContacts(csvBuffer: Buffer): CsvContact[] {
@@ -17,6 +19,8 @@ export function parseCsvContacts(csvBuffer: Buffer): CsvContact[] {
         name: row['name'] || row['Name'] || '',
         phone: normalizePhone(row['phone'] || row['Phone'] || row['number'] || row['Number'] || ''),
         email: row['email'] || row['Email'] || undefined,
+        group: row['group'] || row['Group'] || undefined,
+        link: row['link'] || row['Link'] || undefined,
     })).filter((c) => c.name && c.phone);
 }
 
