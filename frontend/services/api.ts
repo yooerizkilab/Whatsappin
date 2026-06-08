@@ -91,6 +91,7 @@ export const blastAPI = {
     }) => api.post('/messages/blast', data),
     list: () => api.get('/messages/blast'),
     getJob: (id: string) => api.get(`/messages/blast/${id}`),
+    deleteJob: (id: string) => api.delete(`/messages/blast/${id}`),
 };
 
 // ── Templates ─────────────────────────────────────────────

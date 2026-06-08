@@ -70,6 +70,17 @@ export default function BlastPage() {
     SCHEDULED: 'text-purple-400',
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Delete blast "${name}"?`)) return;
+    try {
+      await blastAPI.deleteJob(id);
+      toast.success('Blast job deleted');
+      setJobs((prev) => prev.filter((j) => j.id !== id));
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to delete blast');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -192,6 +203,10 @@ export default function BlastPage() {
                     <span className="flex items-center gap-1">📱 {j.device?.name}</span>
                     <span>👥 {j._count?.recipients ?? 0} recipients</span>
                     <span>📅 {format(new Date(j.createdAt), 'dd MMM, HH:mm')}</span>
+                    <button onClick={() => handleDelete(j.id, j.name)}
+                      className="ml-auto text-red-400 hover:text-red-300 transition-colors" title="Delete">
+                      🗑️
+                    </button>
                   </div>
                 </div>
               ))}
