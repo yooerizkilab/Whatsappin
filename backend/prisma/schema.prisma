@@ -146,6 +146,7 @@ model Contact {
   name      String
   phone     String
   email     String?
+  metadata  Json?    // Extra fields from CSV (link, address, etc.)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

@@ -116,6 +116,7 @@ export const contactController = {
             phone: c.phone,
             email: c.email,
             groupId: c.groupId,
+            metadata: c.metadata,
         }));
         const result = await contactRepository.createMany(dbContacts);
 

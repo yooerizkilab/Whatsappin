@@ -17,7 +17,7 @@ export const contactRepository = {
         return prisma.contact.findUnique({ where: { id }, include: { group: true, tags: true } });
     },
 
-    async create(data: { userId: string; name: string; phone: string; email?: string; groupId?: string; tagIds?: string[] }) {
+    async create(data: { userId: string; name: string; phone: string; email?: string; groupId?: string; tagIds?: string[]; metadata?: any }) {
         const { tagIds, ...contactData } = data;
         return prisma.contact.create({
             data: {
@@ -28,8 +28,8 @@ export const contactRepository = {
         });
     },
 
-    async createMany(contacts: { userId: string; name: string; phone: string; email?: string; groupId?: string }[]) {
-        return prisma.contact.createMany({ data: contacts, skipDuplicates: true });
+    async createMany(contacts: { userId: string; name: string; phone: string; email?: string; groupId?: string; metadata?: any }[]) {
+        return prisma.contact.createMany({ data: contacts as any, skipDuplicates: true });
     },
 
     async update(id: string, data: Partial<{ name: string; phone: string; email: string; groupId: string; tagIds: string[] }>) {

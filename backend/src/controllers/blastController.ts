@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { blastRepository } from '../repositories/blastRepository';
 import { contactRepository } from '../repositories/contactRepository';
-import { resolveTemplate } from '../utils/csvParser';
+import { resolveTemplateFromContact } from '../utils/csvParser';
 import { prisma } from '../config/prisma';
 import { normalizePhone } from '../utils/phone';
 import { sessionManager } from '../baileys/sessionManager';
@@ -59,7 +59,7 @@ export const blastController = {
             blastJobId: job.id,
             contactId: c.id,
             phone: c.phone,
-            message: resolveTemplate(message, { name: c.name, phone: c.phone, email: c.email || '' }),
+            message: resolveTemplateFromContact(message, c),
         }));
 
         await blastRepository.createRecipients(recipients);
