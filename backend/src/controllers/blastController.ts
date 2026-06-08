@@ -3,8 +3,8 @@ import { blastRepository } from '../repositories/blastRepository';
 import { contactRepository } from '../repositories/contactRepository';
 import { resolveTemplate } from '../utils/csvParser';
 import { prisma } from '../config/prisma';
-import { addRecipientJob } from '../queues/blastQueue';
 import { normalizePhone } from '../utils/phone';
+import { sessionManager } from '../baileys/sessionManager';
 
 export const blastController = {
     async create(request: FastifyRequest, reply: FastifyReply) {
@@ -83,23 +83,56 @@ export const blastController = {
             where: { blastJobId: job.id }
         });
 
-        // Add to Redis Queue with staggered delay
-        const baseDelay = scheduledAt ? Math.max(0, new Date(scheduledAt).getTime() - Date.now()) : 0;
+        // ── Kirim langsung via sessionManager ────────────────────────
+        // Tanpa Redis queue — langsung kirim satu per satu via sessionManager
+        // dengan delay 3 detik antar pesan (WA rate limiting)
         const staggeredInterval = parseInt(process.env.MESSAGE_DELAY_MS || '3000', 10);
+        const sendResults: { phone: string; status: string; error?: string }[] = [];
 
         for (let i = 0; i < createdRecipients.length; i++) {
-            await addRecipientJob(
-                createdRecipients[i].id,
-                baseDelay + (i * staggeredInterval)
-            );
+            const r = createdRecipients[i];
+            try {
+                const claim = await blastRepository.markRecipientProcessing(r.id);
+                if (claim.count === 0) continue; // sudah diproses worker lain
+
+                if (type === 'IMAGE') {
+                    await sessionManager.sendImageMessage(deviceId, r.phone, mediaUrl!, r.message);
+                } else if (type === 'DOCUMENT') {
+                    const filename = mediaUrl!.split('/').pop() || 'document.pdf';
+                    await sessionManager.sendDocumentMessage(deviceId, r.phone, mediaUrl!, filename);
+                    if (r.message) {
+                        await sessionManager.sendTextMessage(deviceId, r.phone, r.message);
+                    }
+                } else {
+                    await sessionManager.sendTextMessage(deviceId, r.phone, r.message);
+                }
+
+                await blastRepository.updateRecipientStatus(r.id, 'SENT', undefined, new Date());
+                sendResults.push({ phone: r.phone, status: 'SENT' });
+            } catch (err: any) {
+                await blastRepository.updateRecipientStatus(r.id, 'FAILED', err.message);
+                sendResults.push({ phone: r.phone, status: 'FAILED', error: err.message });
+            }
+
+            // Delay antar pengiriman
+            if (i < createdRecipients.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, staggeredInterval));
+            }
         }
+
+        // Mark job COMPLETED
+        const sentCount = sendResults.filter(r => r.status === 'SENT').length;
+        const failedCount = sendResults.filter(r => r.status === 'FAILED').length;
+        await blastRepository.updateJobStatus(job.id, 'COMPLETED', { completedAt: new Date() });
+        await prisma.blastJob.update({
+            where: { id: job.id },
+            data: { sentCount, failedCount }
+        });
 
         return reply.status(201).send({
             success: true,
-            data: { jobId: job.id, recipientCount: recipients.length },
-            message: scheduledAt
-                ? `Blast job scheduled for ${scheduledAt}`
-                : 'Blast job created and queued for processing.',
+            data: { jobId: job.id, sent: sentCount, failed: failedCount },
+            message: `Blast completed: ${sentCount} sent, ${failedCount} failed`,
         });
     },
 
