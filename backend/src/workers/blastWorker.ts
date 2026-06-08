@@ -54,6 +54,8 @@ export async function startBlastWorker() {
             }
 
             try {
+                logger.info(`[Worker] Sending blast to ${recipient.phone} via device ${device.id} (${device.phoneNumber || 'unknown number'}) type=${blastJob.type}`);
+
                 if (blastJob.type === 'IMAGE') {
                     await sessionManager.sendImageMessage(device.id, recipient.phone, blastJob.mediaUrl, recipient.message);
                 } else if (blastJob.type === 'DOCUMENT') {
@@ -65,6 +67,8 @@ export async function startBlastWorker() {
                 } else {
                     await sessionManager.sendTextMessage(device.id, recipient.phone, recipient.message);
                 }
+
+                logger.info(`[Worker] Successfully sent blast to ${recipient.phone} via device ${device.id}`);
 
                 await blastRepository.updateRecipientStatus(recipient.id, 'SENT', undefined, new Date());
 

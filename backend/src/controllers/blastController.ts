@@ -33,7 +33,7 @@ export const blastController = {
         const job = await blastRepository.createJob({
             userId: ownerId,
             deviceId,
-            templateId,
+            templateId: templateId || undefined,
             name,
             message,
             type,

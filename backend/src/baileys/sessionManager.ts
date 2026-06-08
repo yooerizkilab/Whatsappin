@@ -239,7 +239,9 @@ class SessionManager {
         const session = this.sessions.get(deviceId);
         if (!session) throw new Error(`Device ${deviceId} is not connected`);
         const jid = to.includes('@') ? to : `${to}@s.whatsapp.net`;
-        await session.socket.sendMessage(jid, { text });
+        logger.info(`[SessionManager] sendTextMessage device=${deviceId} phone=${session.socket.user?.id || 'unknown'} to=${jid} text="${text.substring(0, 50)}..."`);
+        const result = await session.socket.sendMessage(jid, { text });
+        logger.info(`[SessionManager] sendTextMessage OK device=${deviceId} to=${jid} msgId=${(result as any)?.key?.id || 'unknown'}`);
     }
 
     async sendImageMessage(
