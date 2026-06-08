@@ -357,7 +357,7 @@ class SessionManager {
                     }
                 }
 
-                await session.socket.readMessages([msg.key]);
+                await session.socket.readMessages([msg.key as any]);
                 await session.socket.sendPresenceUpdate('composing', from);
             }
 
