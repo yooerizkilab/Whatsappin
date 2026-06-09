@@ -76,6 +76,7 @@ export const contactRepository = {
 
     async assignGroupToPhones(userId: string, phones: string[], groupId: string) {
         if (!groupId || phones.length === 0) return { count: 0 } as any;
-        return prisma.contact.updateMany({ where: { userId, phone: { in: phones } }, data: { groupId } });
+        // Only assign group to contacts that don't already have a group
+        return prisma.contact.updateMany({ where: { userId, phone: { in: phones }, groupId: null }, data: { groupId } });
     },
 };
