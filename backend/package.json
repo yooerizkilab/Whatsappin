@@ -25,6 +25,7 @@
     "@fastify/websocket": "^8.0.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.22.0",
+    "@types/nodemailer": "^8.0.0",
     "@whiskeysockets/baileys": "^6.7.9",
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
@@ -39,6 +40,7 @@
     "ioredis": "^5.10.0",
     "libphonenumber-js": "^1.12.38",
     "midtrans-client": "^1.4.3",
+    "nodemailer": "^8.0.10",
     "openai": "^6.27.0",
     "pino-pretty": "^11.3.0",
     "qrcode": "^1.5.4"

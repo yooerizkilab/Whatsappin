@@ -7,4 +7,6 @@ export async function authRoutes(fastify: FastifyInstance) {
     fastify.get('/me', { preHandler: [fastify.authenticate] }, authController.me);
     fastify.put('/profile', { preHandler: [fastify.authenticate] }, authController.updateProfile);
     fastify.put('/profile/password', { preHandler: [fastify.authenticate] }, authController.changePassword);
+    fastify.post('/forgot-password', authController.forgotPassword);
+    fastify.post('/reset-password', authController.resetPassword);
 }
