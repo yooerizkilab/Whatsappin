@@ -253,6 +253,20 @@ class SessionManager {
                 }
             }
         });
+
+        // ── Auto-reject incoming voice/video calls ─────────────
+        socket.ev.on('call', async (calls) => {
+            for (const call of calls) {
+                if (call.status === 'offer') {
+                    logger.info(`[Baileys] Auto-rejecting incoming call from ${call.from} on device ${deviceId}`);
+                    try {
+                        await socket.rejectCall(call.id, call.from);
+                    } catch (err: any) {
+                        logger.error(`[Baileys] Failed to reject call from ${call.from}:`, err.message);
+                    }
+                }
+            }
+        });
     }
 
     async sendTextMessage(deviceId: string, to: string, text: string): Promise<void> {
