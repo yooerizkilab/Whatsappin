@@ -65,6 +65,12 @@ export default function ContactsPage() {
     catch { toast.error('Failed'); }
   };
 
+  const handleDeleteGroup = async (id: string, name: string) => {
+    if (!confirm(`Delete group "${name}"? Contacts in this group will not be deleted.`)) return;
+    try { await contactAPI.deleteGroup(id); load(); toast.success('Group deleted'); }
+    catch { toast.error('Failed to delete group'); }
+  };
+
   const onDrop = useCallback(async (files: File[]) => {
     const file = files[0];
     if (!file) return;
@@ -101,9 +107,15 @@ export default function ContactsPage() {
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${!selectedGroup ? 'bg-brand-700 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
               >All Contacts ({contacts.length})</button>
               {groups.map((g) => (
-                <button key={g.id} onClick={() => setSelectedGroup(g.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGroup === g.id ? 'bg-brand-700 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
-                >{g.name}</button>
+                <div key={g.id} className="flex items-center gap-1">
+                  <button onClick={() => setSelectedGroup(g.id)}
+                    className={`flex-1 text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGroup === g.id ? 'bg-brand-700 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
+                  >{g.name}</button>
+                  <button onClick={() => handleDeleteGroup(g.id, g.name)}
+                    className="text-red-400 hover:text-red-300 opacity-0 hover:opacity-100 transition-opacity text-xs p-1" title="Delete group">
+                    🗑️
+                  </button>
+                </div>
               ))}
             </div>
             <div className="flex gap-2">

@@ -12,4 +12,5 @@ export async function contactRoutes(fastify: FastifyInstance) {
     fastify.post('/import', contactController.importCsv);
     fastify.get('/groups', contactController.listGroups);
     fastify.post('/groups', contactController.createGroup);
+    fastify.delete('/groups/:id', contactController.deleteGroup);
 }

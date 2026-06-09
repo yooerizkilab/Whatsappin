@@ -156,4 +156,17 @@ export const contactController = {
         const group = await contactRepository.createGroup(ownerId, name);
         return reply.status(201).send({ success: true, data: group });
     },
+
+    async deleteGroup(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const { ownerId } = request.user;
+
+        const group = await contactRepository.findGroupById(id);
+        if (!group || group.userId !== ownerId) {
+            return reply.status(404).send({ success: false, message: 'Group not found' });
+        }
+
+        await contactRepository.deleteGroup(id);
+        return reply.send({ success: true, message: 'Group deleted' });
+    },
 };

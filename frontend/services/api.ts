@@ -122,6 +122,7 @@ export const contactAPI = {
     },
     listGroups: () => api.get('/contacts/groups'),
     createGroup: (name: string) => api.post('/contacts/groups', { name }),
+    deleteGroup: (id: string) => api.delete(`/contacts/groups/${id}`),
 };
 
 // ── Tags ──────────────────────────────────────────────────
