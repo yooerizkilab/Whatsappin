@@ -199,15 +199,21 @@ async function backfillScheduledJobs() {
     });
 
     const blastDelayOffsets = new Map<string, number>();
+    const phoneLastDelay = new Map<string, number>();
+    const minSamePhoneGap = env.MESSAGE_DELAY_MS * 6; // ~60s default gap between same-phone sends
 
     for (const recipient of pendingRecipients) {
         const job = recipient.blastJob;
         const offset = blastDelayOffsets.get(job.id) || 0;
+        const lastForPhone = phoneLastDelay.get(recipient.phone) || 0;
         const delay = job.scheduledAt ? Math.max(0, new Date(job.scheduledAt).getTime() - Date.now()) : 0;
-        await addRecipientJob(recipient.id, delay + offset);
-        // Random jitter between 60%-140% of MESSAGE_DELAY_MS so intervals look natural
+
+        const effectiveOffset = Math.max(offset, lastForPhone);
+        await addRecipientJob(recipient.id, delay + effectiveOffset);
+
         const jitter = Math.round(env.MESSAGE_DELAY_MS * (0.6 + Math.random() * 0.8));
         blastDelayOffsets.set(job.id, offset + jitter);
+        phoneLastDelay.set(recipient.phone, effectiveOffset + minSamePhoneGap);
     }
 
     if (pendingRecipients.length > 0) {

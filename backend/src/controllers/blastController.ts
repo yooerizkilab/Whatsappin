@@ -129,15 +129,22 @@ export const blastController = {
         });
 
         const staggeredInterval = parseInt(process.env.MESSAGE_DELAY_MS || '3000', 10);
+        const minSamePhoneGap = staggeredInterval * 6; // ~60s gap if MESSAGE_DELAY_MS=10000
         const baseDelay = scheduledDate ? Math.max(0, scheduledDate.getTime() - Date.now()) : 0;
 
+        const phoneLastDelay = new Map<string, number>();
         let cumulativeDelay = 0;
         for (let i = 0; i < createdRecipients.length; i++) {
-            // Random delay between 60%-140% of staggeredInterval for each recipient
-            // so it looks more natural (not sent in rigid intervals)
+            const phone = createdRecipients[i].phone;
+            const lastDelayForPhone = phoneLastDelay.get(phone) || 0;
+
+            // Ensure minimum gap if same phone was already scheduled
+            const delay = Math.max(cumulativeDelay, lastDelayForPhone);
+            await addRecipientJob(createdRecipients[i].id, baseDelay + delay);
+
             const jitter = Math.round(staggeredInterval * (0.6 + Math.random() * 0.8));
-            await addRecipientJob(createdRecipients[i].id, baseDelay + cumulativeDelay);
             cumulativeDelay += jitter;
+            phoneLastDelay.set(phone, delay + minSamePhoneGap);
         }
 
         if (owner.role !== 'ADMIN') {
