@@ -620,7 +620,7 @@ DELETE /v1/contacts/groups/:id`} lang="http" />
                   <CodeBlock code={`name,phone,email,link,group
 John Doe,628123456789,john@email.com,https://invite.example.com/john,Invitation
 Jane Smith,628987654321,jane@email.com,,Customers`} lang="csv" />
-                  <p className="text-xs text-gray-600 mt-3">💡 Kolom <code className="text-brand-400">link</code>, <code className="text-brand-400">group</code>, dan kolom lain otomatis menjadi <code className="text-brand-400">{{var}}</code> di template blast.</p>
+                  <p className="text-xs text-gray-600 mt-3">💡 Kolom <code className="text-brand-400">link</code>, <code className="text-brand-400">group</code>, dan kolom lain otomatis menjadi <code className="text-brand-400">{'{{var}}'}</code> di template blast.</p>
                 </div>
               </FadeIn>
             </section>
