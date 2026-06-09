@@ -11,8 +11,8 @@ WhatsApp Gateway (SaaS) — Kirim & kelola pesan WhatsApp secara terprogram deng
 | Tujuan | Link |
 | --- | --- |
 | Panduan Installasi & Konfigurasi | [docs/](docs/README.md) |
-| API Reference | [`/api`](frontend/app/api/page.tsx) |
-| Developer Guide | [`/docs`](frontend/app/docs/page.tsx) |
+| API Reference | [whatsappin.com/api](https://whatsappin.com/api) |
+| Developer Guide | [whatsappin.com/docs](https://whatsappin.com/docs) |
 | Infrastruktur (Docker, deploy) | [Infrastruktur/](Infrastruktur/README.md) |
 
 ## Quick Start
