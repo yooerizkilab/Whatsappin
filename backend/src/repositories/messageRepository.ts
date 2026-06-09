@@ -27,17 +27,22 @@ export const messageRepository = {
 
     async findAll(filters: { userId?: string; deviceId?: string; status?: string; limit?: number; offset?: number }) {
         const { userId, deviceId, status, limit = 50, offset = 0 } = filters;
-        return prisma.message.findMany({
-            where: {
-                ...(deviceId && { deviceId }),
-                ...(status && { status: status as any }),
-                ...(userId && { device: { userId } }),
-            },
-            include: { device: { select: { name: true } }, logs: true },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-            skip: offset,
-        });
+        const where = {
+            ...(deviceId && { deviceId }),
+            ...(status && { status: status as any }),
+            ...(userId && { device: { userId } }),
+        };
+        const [data, total] = await prisma.$transaction([
+            prisma.message.findMany({
+                where,
+                include: { device: { select: { name: true } }, logs: true },
+                orderBy: { createdAt: 'desc' },
+                take: limit,
+                skip: offset,
+            }),
+            prisma.message.count({ where }),
+        ]);
+        return { data, total };
     },
 
     async upsertIncoming(data: {

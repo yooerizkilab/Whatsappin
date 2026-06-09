@@ -70,7 +70,7 @@ export const messageAPI = {
         mediaUrl?: string;
         scheduledAt?: string;
     }) => api.post('/messages/send', data),
-    getLogs: (params?: { deviceId?: string; status?: string; limit?: number; offset?: number }) =>
+    getLogs: (params?: { deviceId?: string; status?: string; page?: number; pageSize?: number }) =>
         api.get('/messages/logs', { params }),
     downloadReport: (params?: { deviceId?: string; status?: string }) =>
         api.get('/messages/logs/report', { params, responseType: 'blob' }),

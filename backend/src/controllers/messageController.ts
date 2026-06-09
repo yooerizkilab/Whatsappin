@@ -122,22 +122,34 @@ export const messageController = {
     },
 
     async getLogs(request: FastifyRequest, reply: FastifyReply) {
-        const { deviceId, status, limit = '50', offset = '0' } = request.query as {
+        const { deviceId, status, page: pageStr, pageSize: pageSizeStr } = request.query as {
             deviceId?: string;
             status?: string;
-            limit?: string;
-            offset?: string;
+            page?: string;
+            pageSize?: string;
         };
 
         const { ownerId } = request.user;
-        const messages = await messageRepository.findAll({
+        const page = Math.max(1, parseInt(pageStr || '1', 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr || '50', 10) || 50));
+        const offset = (page - 1) * pageSize;
+        const result = await messageRepository.findAll({
             userId: ownerId,
             deviceId,
             status,
-            limit: parseInt(limit, 10),
-            offset: parseInt(offset, 10),
+            limit: pageSize,
+            offset,
         });
 
-        return reply.send({ success: true, data: messages });
+        return reply.send({
+            success: true,
+            data: result.data,
+            pagination: {
+                page,
+                pageSize,
+                total: result.total,
+                totalPages: Math.ceil(result.total / pageSize),
+            }
+        });
     },
 };
