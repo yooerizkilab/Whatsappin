@@ -20,6 +20,12 @@ frontend/out/
 backend/prisma/*.db
 backend/prisma/*.db-journal
 
+# Redis dump files
+*.rdb
+
+# Temporary test files
+tes.csv
+
 # Logs
 logs
 *.log
