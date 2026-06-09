@@ -9,12 +9,10 @@ CREATE DATABASE IF NOT EXISTS whatsapp_gateway
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
--- (Opsional) Buat user khusus untuk aplikasi
+-- Grant untuk user aplikasi (opsional)
 -- CREATE USER IF NOT EXISTS 'whatsappin'@'%' IDENTIFIED BY 'your-password';
 -- GRANT ALL PRIVILEGES ON whatsapp_gateway.* TO 'whatsappin'@'%';
 -- FLUSH PRIVILEGES;
 
--- Prisma akan membuat tabel otomatis saat migration dijalankan:
---   npx prisma migrate dev
--- atau di Docker:
---   docker exec whatsappin-backend npx prisma migrate deploy
+-- Schema tabel dibuat oleh Prisma migration, bukan di sini.
+-- Lihat: backend/prisma/migrations/
