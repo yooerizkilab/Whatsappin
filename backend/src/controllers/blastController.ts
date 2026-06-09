@@ -67,11 +67,11 @@ export const blastController = {
         }
 
         const contacts = await contactRepository.findAll(ownerId, groupId);
-        if (contacts.length === 0) {
+        if (contacts.data.length === 0) {
             return reply.status(400).send({ success: false, message: 'No contacts found for blast' });
         }
 
-        const resolvedRecipients = contacts.map((contact: any) => {
+        const resolvedRecipients = contacts.data.map((contact: any) => {
             const normalizedPhone = normalizePhone(contact.phone);
             if (!normalizedPhone) return null;
             return {
