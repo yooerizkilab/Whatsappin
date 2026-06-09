@@ -172,6 +172,44 @@ export const blastController = {
         return reply.send({ success: true, data: { ...job, stats: counts } });
     },
 
+    async downloadReport(request: FastifyRequest, reply: FastifyReply) {
+        const { id } = request.params as { id: string };
+        const { ownerId, role } = request.user;
+
+        const job = await blastRepository.findJobById(id);
+        if (!job) return reply.status(404).send({ success: false, message: 'Blast job not found' });
+        if (job.userId !== ownerId && role !== 'ADMIN') return reply.status(403).send({ success: false, message: 'Forbidden' });
+
+        const recipients = await prisma.blastRecipient.findMany({
+            where: { blastJobId: id },
+            orderBy: { createdAt: 'asc' },
+        });
+
+        const csvRows: string[] = [];
+        // BOM for Excel compatibility
+        const BOM = '﻿';
+        csvRows.push(BOM + 'No,Phone,Message,Status,Error,Sent At');
+
+        recipients.forEach((r, i) => {
+            const row = [
+                i + 1,
+                r.phone,
+                `"${(r.message || '').replace(/"/g, '""')}"`,
+                r.status,
+                `"${(r.error || '').replace(/"/g, '""')}"`,
+                r.sentAt ? new Date(r.sentAt).toISOString() : '',
+            ].join(',');
+            csvRows.push(row);
+        });
+
+        const csvContent = csvRows.join('\r\n');
+        const safeName = job.name.replace(/[^a-zA-Z0-9_\- ]/g, '_');
+
+        reply.header('Content-Type', 'text/csv; charset=utf-8');
+        reply.header('Content-Disposition', `attachment; filename="blast-report-${safeName}.csv"`);
+        return reply.send(csvContent);
+    },
+
     async deleteJob(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.params as { id: string };
         const { ownerId, role } = request.user;

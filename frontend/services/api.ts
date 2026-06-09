@@ -72,6 +72,8 @@ export const messageAPI = {
     }) => api.post('/messages/send', data),
     getLogs: (params?: { deviceId?: string; status?: string; limit?: number; offset?: number }) =>
         api.get('/messages/logs', { params }),
+    downloadReport: (params?: { deviceId?: string; status?: string }) =>
+        api.get('/messages/logs/report', { params, responseType: 'blob' }),
 };
 
 // ── Chats ─────────────────────────────────────────────────
@@ -93,6 +95,7 @@ export const blastAPI = {
     }) => api.post('/messages/blast', data),
     list: () => api.get('/messages/blast'),
     getJob: (id: string) => api.get(`/messages/blast/${id}`),
+    downloadReport: (id: string) => api.get(`/messages/blast/${id}/report`, { responseType: 'blob' }),
     deleteJob: (id: string) => api.delete(`/messages/blast/${id}`),
 };
 

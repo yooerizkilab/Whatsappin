@@ -81,6 +81,22 @@ export default function BlastPage() {
     }
   };
 
+  const handleDownloadReport = async (id: string, name: string) => {
+    try {
+      const response = await blastAPI.downloadReport(id);
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `blast-report-${name.replace(/[^a-zA-Z0-9_\- ]/g, '_')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Report downloaded');
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Failed to download report');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -203,10 +219,16 @@ export default function BlastPage() {
                     <span className="flex items-center gap-1">📱 {j.device?.name}</span>
                     <span>👥 {j._count?.recipients ?? 0} recipients</span>
                     <span>📅 {format(new Date(j.createdAt), 'dd MMM, HH:mm')}</span>
-                    <button onClick={() => handleDelete(j.id, j.name)}
-                      className="ml-auto text-red-400 hover:text-red-300 transition-colors" title="Delete">
-                      🗑️
-                    </button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button onClick={() => handleDownloadReport(j.id, j.name)}
+                        className="text-blue-400 hover:text-blue-300 transition-colors" title="Download Report">
+                        📥
+                      </button>
+                      <button onClick={() => handleDelete(j.id, j.name)}
+                        className="text-red-400 hover:text-red-300 transition-colors" title="Delete">
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

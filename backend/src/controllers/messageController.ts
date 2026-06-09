@@ -79,6 +79,48 @@ export const messageController = {
         }
     },
 
+    async downloadReport(request: FastifyRequest, reply: FastifyReply) {
+        const { deviceId, status } = request.query as {
+            deviceId?: string;
+            status?: string;
+        };
+
+        const { ownerId } = request.user;
+        const messages = await messageRepository.findAll({
+            userId: ownerId,
+            deviceId,
+            status,
+            limit: 999999,
+            offset: 0,
+        });
+
+        const csvRows: string[] = [];
+        const BOM = '﻿';
+        csvRows.push(BOM + 'No,Phone,Type,Message,Device,Status,Sent At,Created At');
+
+        const stripJid = (phone: string) => phone.replace(/:.*@s\.whatsapp\.net$/, '');
+
+        messages.forEach((m: any, i: number) => {
+            const row = [
+                i + 1,
+                stripJid(m.to),
+                m.type,
+                `"${(m.content || '').replace(/"/g, '""')}"`,
+                m.device?.name || '',
+                m.status,
+                m.sentAt ? new Date(m.sentAt).toISOString() : '',
+                new Date(m.createdAt).toISOString(),
+            ].join(',');
+            csvRows.push(row);
+        });
+
+        const csvContent = csvRows.join('\r\n');
+
+        reply.header('Content-Type', 'text/csv; charset=utf-8');
+        reply.header('Content-Disposition', 'attachment; filename="message-report.csv"');
+        return reply.send(csvContent);
+    },
+
     async getLogs(request: FastifyRequest, reply: FastifyReply) {
         const { deviceId, status, limit = '50', offset = '0' } = request.query as {
             deviceId?: string;

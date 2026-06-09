@@ -9,8 +9,10 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
     fastify.post('/send', { preHandler: [quotaMiddleware.checkMessageQuota] }, messageController.send);
     fastify.get('/logs', messageController.getLogs);
+    fastify.get('/logs/report', messageController.downloadReport);
     fastify.post('/blast', blastController.create);
     fastify.get('/blast', blastController.list);
     fastify.get('/blast/:id', blastController.getJob);
+    fastify.get('/blast/:id/report', blastController.downloadReport);
     fastify.delete('/blast/:id', blastController.deleteJob);
 }
