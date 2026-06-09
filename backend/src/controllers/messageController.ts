@@ -100,7 +100,7 @@ export const messageController = {
 
         const stripJid = (phone: string) => phone.replace(/:.*@s\.whatsapp\.net$/, '');
 
-        messages.forEach((m: any, i: number) => {
+        messages.data.forEach((m: any, i: number) => {
             const row = [
                 i + 1,
                 stripJid(m.to),
