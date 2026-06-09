@@ -57,6 +57,13 @@ export const blastRepository = {
         });
     },
 
+    async resetRecipientPending(id: string, error?: string) {
+        return prisma.blastRecipient.update({
+            where: { id },
+            data: { status: 'PENDING' as any, error },
+        });
+    },
+
     async updateRecipientStatus(id: string, status: 'SENT' | 'FAILED', error?: string, sentAt?: Date) {
         const recipient = await prisma.blastRecipient.update({
             where: { id },

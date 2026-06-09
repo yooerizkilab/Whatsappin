@@ -9,6 +9,66 @@ import { sessionManager } from '../baileys/sessionManager';
 import { wsServer } from '../websocket/wsServer';
 import { logger } from '../utils/logger';
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isTransientDeviceConnectionError(error: any) {
+    const message = String(error?.message || '').toLowerCase();
+    return [
+        'is not connected',
+        'connection closed',
+        'stream errored',
+        'timed out',
+        'not open',
+        'connection was lost',
+    ].some((pattern) => message.includes(pattern));
+}
+
+async function refreshDeviceSession(deviceId: string) {
+    try {
+        logger.info(`[Worker] Refreshing WhatsApp session for device ${deviceId} before retry.`);
+        await sessionManager.createSession(deviceId);
+    } catch (refreshError: any) {
+        logger.error(`[Worker] Failed to refresh session for device ${deviceId}:`, refreshError.message);
+    }
+}
+
+async function ensureDeviceSession(deviceId: string) {
+    const hasReadySession = () => Boolean(sessionManager.getSession(deviceId)?.socket.user);
+
+    if (!hasReadySession()) {
+        logger.info(`[Worker] Restoring WhatsApp session for device ${deviceId} before sending blast.`);
+        if (!sessionManager.getSession(deviceId)) {
+            await sessionManager.createSession(deviceId);
+        }
+    }
+
+    const deadline = Date.now() + 15000;
+    while (!hasReadySession() && Date.now() < deadline) {
+        await wait(500);
+    }
+
+    if (!hasReadySession()) {
+        throw new Error(`Device ${deviceId} is not connected`);
+    }
+}
+
+async function completeBlastJobIfDone(blastJobId: string) {
+    const counts = await blastRepository.countRecipients(blastJobId);
+    if (counts.pending === 0) {
+        const finalStatus = counts.sent > 0 ? 'COMPLETED' : 'FAILED';
+
+        await blastRepository.updateJobStatus(blastJobId, finalStatus, {
+            completedAt: new Date(),
+        });
+        wsServer.broadcast('blast_completed', {
+            blastJobId,
+            status: finalStatus,
+            stats: counts
+        });
+        logger.info(`[Worker] Blast job ${blastJobId} ${finalStatus}`);
+    }
+}
+
 export async function startBlastWorker() {
     // logger.debug('[Worker] Initializing BullMQ Blast Worker...');
 
@@ -43,6 +103,7 @@ export async function startBlastWorker() {
 
             if (!device) {
                 await blastRepository.updateRecipientStatus(recipient.id, 'FAILED', 'Device not found');
+                await completeBlastJobIfDone(recipient.blastJobId);
                 return;
             }
 
@@ -55,6 +116,9 @@ export async function startBlastWorker() {
 
             try {
                 logger.info(`[Worker] Sending blast to ${recipient.phone} via device ${device.id} (${device.phoneNumber || 'unknown number'}) type=${blastJob.type}`);
+
+                await ensureDeviceSession(device.id);
+                await sessionManager.assertWhatsAppRecipient(device.id, recipient.phone);
 
                 if (blastJob.type === 'IMAGE') {
                     await sessionManager.sendImageMessage(device.id, recipient.phone, blastJob.mediaUrl, recipient.message);
@@ -79,6 +143,13 @@ export async function startBlastWorker() {
                 });
             } catch (err: any) {
                 logger.error(`[Worker] Failed to send to ${recipient.phone}:`, err.message);
+
+                if (isTransientDeviceConnectionError(err)) {
+                    await blastRepository.resetRecipientPending(recipient.id, err.message);
+                    await refreshDeviceSession(device.id);
+                    throw err;
+                }
+
                 await blastRepository.updateRecipientStatus(recipient.id, 'FAILED', err.message);
 
                 wsServer.sendToDevice(device.id, 'blast_progress', {
@@ -89,18 +160,7 @@ export async function startBlastWorker() {
                 });
             }
 
-            // Efficiently check completion using the repository's new count logic
-            const counts = await blastRepository.countRecipients(recipient.blastJobId);
-            if (counts.pending === 0) {
-                await blastRepository.updateJobStatus(recipient.blastJobId, 'COMPLETED', {
-                    completedAt: new Date(),
-                });
-                wsServer.broadcast('blast_completed', {
-                    blastJobId: recipient.blastJobId,
-                    stats: counts
-                });
-                logger.info(`[Worker] Blast job ${recipient.blastJobId} COMPLETED`);
-            }
+            await completeBlastJobIfDone(recipient.blastJobId);
         },
         {
             connection: redisConnection as ConnectionOptions,
@@ -108,8 +168,20 @@ export async function startBlastWorker() {
         }
     );
 
-    worker.on('failed', (job, err) => {
+    worker.on('failed', async (job, err) => {
         logger.error(`[Worker] Job ${job?.id} failed:`, err.message);
+        const attempts = job?.opts.attempts || 1;
+        const attemptsMade = job?.attemptsMade || 0;
+        if (attemptsMade < attempts) return;
+
+        const recipientId = (job?.data as { recipientId?: string } | undefined)?.recipientId;
+        if (!recipientId) return;
+
+        const recipient = await blastRepository.findRecipientById(recipientId);
+        if (!recipient || recipient.status === 'SENT' || recipient.status === 'FAILED') return;
+
+        await blastRepository.updateRecipientStatus(recipient.id, 'FAILED', err.message);
+        await completeBlastJobIfDone(recipient.blastJobId);
     });
 
     logger.info('[Worker] Blast Worker is now listening for jobs.');
@@ -119,13 +191,21 @@ async function backfillScheduledJobs() {
     // logger.debug('[Worker] Checking for unsent recipients to backfill...');
     const pendingRecipients = await prisma.blastRecipient.findMany({
         where: { status: 'PENDING' },
-        include: { blastJob: true }
+        include: { blastJob: true },
+        orderBy: [
+            { blastJobId: 'asc' },
+            { createdAt: 'asc' },
+        ],
     });
+
+    const blastDelayOffsets = new Map<string, number>();
 
     for (const recipient of pendingRecipients) {
         const job = recipient.blastJob;
+        const offset = blastDelayOffsets.get(job.id) || 0;
         const delay = job.scheduledAt ? Math.max(0, new Date(job.scheduledAt).getTime() - Date.now()) : 0;
-        await addRecipientJob(recipient.id, delay);
+        await addRecipientJob(recipient.id, delay + offset);
+        blastDelayOffsets.set(job.id, offset + env.MESSAGE_DELAY_MS);
     }
 
     if (pendingRecipients.length > 0) {
@@ -133,3 +213,13 @@ async function backfillScheduledJobs() {
     }
 }
 
+if (require.main === module) {
+    (async () => {
+        await sessionManager.restoreAllSessions();
+        logger.info('[Worker] WhatsApp sessions restored');
+        await startBlastWorker();
+    })().catch((err) => {
+        logger.error('[Worker] Failed to start Blast Worker:', err);
+        process.exit(1);
+    });
+}

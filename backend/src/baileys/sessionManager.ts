@@ -28,6 +28,7 @@ export interface DeviceSession {
 
 class SessionManager {
     private sessions = new Map<string, DeviceSession>();
+    private reconnectTimers = new Map<string, NodeJS.Timeout>();
 
     getSession(deviceId: string): DeviceSession | undefined {
         return this.sessions.get(deviceId);
@@ -38,6 +39,12 @@ class SessionManager {
     }
 
     async createSession(deviceId: string): Promise<void> {
+        const pendingReconnect = this.reconnectTimers.get(deviceId);
+        if (pendingReconnect) {
+            clearTimeout(pendingReconnect);
+            this.reconnectTimers.delete(deviceId);
+        }
+
         // Prevent duplicate session creation
         const existingSession = this.sessions.get(deviceId);
         if (existingSession) {
@@ -124,10 +131,15 @@ class SessionManager {
 
                 logger.info(`[Baileys] Connection closed for device ${deviceId}. Status: ${statusCode}, Reconnecting: ${shouldReconnect}`);
 
+                const currentSession = this.sessions.get(deviceId);
+                if (currentSession?.socket === socket) {
+                    this.sessions.delete(deviceId);
+                }
+
                 try {
                     await prisma.device.updateMany({
                         where: { id: deviceId },
-                        data: { status: 'DISCONNECTED' },
+                        data: { status: shouldReconnect ? 'CONNECTING' : 'DISCONNECTED' },
                     });
                 } catch (err) {
                     logger.error(`[Baileys] Error updating disconnect status for device ${deviceId}:`, err);
@@ -135,11 +147,19 @@ class SessionManager {
 
                 wsServer.sendToDevice(deviceId, 'device_status', {
                     deviceId,
-                    status: 'DISCONNECTED',
+                    status: shouldReconnect ? 'CONNECTING' : 'DISCONNECTED',
                 });
 
                 if (shouldReconnect) {
-                    setTimeout(() => this.createSession(deviceId), 5000);
+                    if (!this.reconnectTimers.has(deviceId)) {
+                        const timer = setTimeout(() => {
+                            this.reconnectTimers.delete(deviceId);
+                            this.createSession(deviceId).catch((err) => {
+                                logger.error(`[Baileys] Reconnect failed for device ${deviceId}:`, err);
+                            });
+                        }, 5000);
+                        this.reconnectTimers.set(deviceId, timer);
+                    }
                 } else {
                     this.sessions.delete(deviceId);
                     // clear session files on logout
@@ -242,6 +262,21 @@ class SessionManager {
         logger.info(`[SessionManager] sendTextMessage device=${deviceId} phone=${session.socket.user?.id || 'unknown'} to=${jid} text="${text.substring(0, 50)}..."`);
         const result = await session.socket.sendMessage(jid, { text });
         logger.info(`[SessionManager] sendTextMessage OK device=${deviceId} to=${jid} msgId=${(result as any)?.key?.id || 'unknown'}`);
+    }
+
+    async assertWhatsAppRecipient(deviceId: string, to: string): Promise<void> {
+        if (to.includes('@g.us')) return;
+
+        const session = this.sessions.get(deviceId);
+        if (!session) throw new Error(`Device ${deviceId} is not connected`);
+
+        const jid = to.includes('@') ? to : `${to}@s.whatsapp.net`;
+        const result = await session.socket.onWhatsApp(jid);
+        const match = result?.find((entry) => entry.jid === jid);
+
+        if (!match?.exists) {
+            throw new Error(`Recipient ${to} is not registered on WhatsApp`);
+        }
     }
 
     async sendImageMessage(
