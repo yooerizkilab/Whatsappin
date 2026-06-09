@@ -39,65 +39,69 @@ const sections = [
     { id: 'errors', label: 'Errors' },
   ]},
   { title: 'Auth', items: [
-    { id: 'auth-login', label: 'Login' },
-    { id: 'auth-register', label: 'Register' },
+    { id: 'login', label: 'Login' },
+    { id: 'register', label: 'Register' },
   ]},
   { title: 'Devices', items: [
-    { id: 'devices-list', label: 'List Devices' },
-    { id: 'devices-create', label: 'Create Device' },
-    { id: 'devices-status', label: 'Get Status' },
-    { id: 'devices-delete', label: 'Delete Device' },
+    { id: 'list-devices', label: 'List Devices' },
+    { id: 'create-device', label: 'Create Device' },
+    { id: 'get-device-status', label: 'Get Status' },
+    { id: 'delete-device', label: 'Delete Device' },
   ]},
   { title: 'Messages', items: [
-    { id: 'msg-send', label: 'Send Message' },
-    { id: 'msg-logs', label: 'Message Logs' },
+    { id: 'send-message', label: 'Send Message' },
+    { id: 'message-logs', label: 'Message Logs' },
   ]},
   { title: 'Blast', items: [
-    { id: 'blast-create', label: 'Create Blast' },
-    { id: 'blast-list', label: 'List Jobs' },
-    { id: 'blast-get', label: 'Get Job' },
-    { id: 'blast-delete', label: 'Delete Job' },
+    { id: 'create-blast', label: 'Create Blast' },
+    { id: 'list-blast-jobs', label: 'List Jobs' },
+    { id: 'get-blast-job', label: 'Get Job' },
+    { id: 'delete-blast-job', label: 'Delete Job' },
   ]},
   { title: 'Contacts', items: [
-    { id: 'contacts-list', label: 'List Contacts' },
-    { id: 'contacts-create', label: 'Create Contact' },
-    { id: 'contacts-import', label: 'Import CSV' },
-    { id: 'contacts-delete', label: 'Delete Contact' },
-    { id: 'groups-list', label: 'List Groups' },
-    { id: 'groups-create', label: 'Create Group' },
-    { id: 'groups-delete', label: 'Delete Group' },
+    { id: 'list-contacts', label: 'List Contacts' },
+    { id: 'create-contact', label: 'Create Contact' },
+    { id: 'update-contact', label: 'Update Contact' },
+    { id: 'delete-contact', label: 'Delete Contact' },
+    { id: 'import-csv', label: 'Import CSV' },
+    { id: 'list-groups', label: 'List Groups' },
+    { id: 'create-group', label: 'Create Group' },
+    { id: 'delete-group', label: 'Delete Group' },
   ]},
   { title: 'Templates', items: [
-    { id: 'templates-list', label: 'List Templates' },
-    { id: 'templates-create', label: 'Create Template' },
-    { id: 'templates-update', label: 'Update Template' },
-    { id: 'templates-delete', label: 'Delete Template' },
+    { id: 'list-templates', label: 'List Templates' },
+    { id: 'create-template', label: 'Create Template' },
+    { id: 'update-template', label: 'Update Template' },
+    { id: 'delete-template', label: 'Delete Template' },
   ]},
   { title: 'Auto Responder', items: [
-    { id: 'ar-list', label: 'List Responders' },
-    { id: 'ar-create', label: 'Create Responder' },
-    { id: 'ar-rules', label: 'Manage Rules' },
+    { id: 'list-auto-responders', label: 'List Responders' },
+    { id: 'create-auto-responder', label: 'Create Responder' },
+    { id: 'add-rule', label: 'Add Rule' },
+    { id: 'update-rule', label: 'Update Rule' },
+    { id: 'delete-rule', label: 'Delete Rule' },
+    { id: 'delete-auto-responder', label: 'Delete Responder' },
   ]},
   { title: 'Webhooks', items: [
-    { id: 'wh-list', label: 'List Webhooks' },
-    { id: 'wh-create', label: 'Create Webhook' },
+    { id: 'list-webhooks', label: 'List Webhooks' },
+    { id: 'create-webhook', label: 'Create Webhook' },
   ]},
   { title: 'API Keys', items: [
-    { id: 'ak-list', label: 'List API Keys' },
-    { id: 'ak-create', label: 'Create API Key' },
+    { id: 'list-api-keys', label: 'List API Keys' },
+    { id: 'create-api-key', label: 'Create API Key' },
   ]},
   { title: 'Analytics', items: [
-    { id: 'analytics-blast', label: 'Blast Stats' },
+    { id: 'blast-stats', label: 'Blast Stats' },
   ]},
 ];
 
 /* ── Endpoint Definition ── */
-function Endpoint({ method, path, title, desc, auth, body, example }: {
+function Endpoint({ method, path, title, desc, auth, body, example, id }: {
   method: string; path: string; title: string; desc: string; auth: string;
-  body?: string; example?: string;
+  body?: string; example?: string; id?: string;
 }) {
   return (
-    <section id={title.toLowerCase().replace(/\s+/g, '-')} className="space-y-4 scroll-mt-24 py-6 border-t border-white/5 first:border-0">
+    <section id={id || title.toLowerCase().replace(/\s+/g, '-')} className="space-y-4 scroll-mt-24 py-6 border-t border-white/5 first:border-0">
       <div className="flex items-center gap-3 flex-wrap">
         <Method method={method} />
         <code className="text-sm font-mono text-gray-300 bg-white/5 px-3 py-1 rounded-lg">{path}</code>
