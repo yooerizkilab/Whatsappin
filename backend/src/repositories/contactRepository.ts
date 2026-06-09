@@ -65,8 +65,8 @@ export const contactRepository = {
     },
 
     async deleteGroup(id: string) {
-        // Unlink all contacts from this group first, then delete the group
-        await prisma.contact.updateMany({ where: { groupId: id }, data: { groupId: null } });
+        // Delete all contacts in this group first, then delete the group
+        await prisma.contact.deleteMany({ where: { groupId: id } });
         return prisma.contactGroup.delete({ where: { id } });
     },
 
