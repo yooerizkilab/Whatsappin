@@ -205,7 +205,9 @@ async function backfillScheduledJobs() {
         const offset = blastDelayOffsets.get(job.id) || 0;
         const delay = job.scheduledAt ? Math.max(0, new Date(job.scheduledAt).getTime() - Date.now()) : 0;
         await addRecipientJob(recipient.id, delay + offset);
-        blastDelayOffsets.set(job.id, offset + env.MESSAGE_DELAY_MS);
+        // Random jitter between 60%-140% of MESSAGE_DELAY_MS so intervals look natural
+        const jitter = Math.round(env.MESSAGE_DELAY_MS * (0.6 + Math.random() * 0.8));
+        blastDelayOffsets.set(job.id, offset + jitter);
     }
 
     if (pendingRecipients.length > 0) {

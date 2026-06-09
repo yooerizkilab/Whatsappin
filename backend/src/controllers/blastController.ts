@@ -131,8 +131,13 @@ export const blastController = {
         const staggeredInterval = parseInt(process.env.MESSAGE_DELAY_MS || '3000', 10);
         const baseDelay = scheduledDate ? Math.max(0, scheduledDate.getTime() - Date.now()) : 0;
 
+        let cumulativeDelay = 0;
         for (let i = 0; i < createdRecipients.length; i++) {
-            await addRecipientJob(createdRecipients[i].id, baseDelay + (i * staggeredInterval));
+            // Random delay between 60%-140% of staggeredInterval for each recipient
+            // so it looks more natural (not sent in rigid intervals)
+            const jitter = Math.round(staggeredInterval * (0.6 + Math.random() * 0.8));
+            await addRecipientJob(createdRecipients[i].id, baseDelay + cumulativeDelay);
+            cumulativeDelay += jitter;
         }
 
         if (owner.role !== 'ADMIN') {
