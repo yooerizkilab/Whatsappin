@@ -112,7 +112,7 @@ export default function ContactsPage() {
                     className={`flex-1 text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGroup === g.id ? 'bg-brand-700 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
                   >{g.name}</button>
                   <button onClick={() => handleDeleteGroup(g.id, g.name)}
-                    className="text-red-400 hover:text-red-300 opacity-0 hover:opacity-100 transition-opacity text-xs p-1" title="Delete group">
+                    className="text-red-400/60 hover:text-red-300 transition-colors text-xs p-1.5 rounded-lg hover:bg-red-900/20" title="Delete group">
                     🗑️
                   </button>
                 </div>
