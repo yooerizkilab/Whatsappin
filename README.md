@@ -1,28 +1,48 @@
 # Whatsappin
 
-Sistem WhatsApp Gateway (SaaS) full-stack yang dibangun menggunakan **Node.js, Fastify, Prisma, Baileys** (Backend) dan **Next.js, TailwindCSS** (Frontend).
+WhatsApp Gateway (SaaS) — Kirim & kelola pesan WhatsApp secara terprogram dengan REST API, AI Auto-Responder, Blast Campaign, dan Webhooks.
 
-## 📋 Prasyarat Sistem
-
-Sebelum memulai instalasi, pastikan sistem Anda memiliki:
-
-- Node.js (versi 20 atau lebih baru)
-- MySQL / MariaDB (minimal versi 8.0)
-- Git (jika ingin clone dari repositori)
+**Stack:** Node.js / Fastify / Prisma / MySQL / Redis / Baileys (Backend) · Next.js / Tailwind CSS (Frontend)
 
 ---
 
-## 📖 Dokumentasi Lengkap
+## Dokumentasi
 
-Kami telah menyediakan panduan lengkap yang terorganisir untuk membantu Anda memulai:
+| Tujuan | Link |
+| --- | --- |
+| Panduan Installasi & Konfigurasi | [docs/](docs/README.md) |
+| API Reference | [`/api`](frontend/app/api/page.tsx) |
+| Developer Guide | [`/docs`](frontend/app/docs/page.tsx) |
+| Infrastruktur (Docker, deploy) | [Infrastruktur/](Infrastruktur/README.md) |
 
-👉 **[Buka Dokumentasi Utama (docs/README.md)](docs/README.md)**
+## Quick Start
 
-Di sana Anda akan menemukan:
-- [🚀 **Panduan Instalasi**](docs/INSTALLATION.md)
-- [⚙️ **Konfigurasi Environment**](docs/CONFIGURATION.md)
-- [🔌 **Referensi API & Webhooks**](docs/API.md)
-- [🛠️ **Detail Fitur (Auto-Responder, Blast, dll)**](docs/README.md#fitur-unggulan)
+```bash
+# 1. Clone
+git clone https://github.com/your-repo/whatsapp-gateway.git
+cd whatsapp-gateway/backend
+
+# 2. Setup backend
+cp .env.example .env   # isi DATABASE_URL, JWT_SECRET
+npm install
+npx prisma migrate dev
+npm run dev
+
+# 3. Setup frontend (terminal baru)
+cd ../frontend
+npm install
+npm run dev
+```
+
+## Docker
+
+```bash
+# Development stack (MySQL + Redis + Backend + Frontend)
+docker compose up -d --build
+
+# Production stack (with Nginx + Monitoring)
+docker compose -f Infrastruktur/docker-compose.prod.yml up -d --build
+```
 
 ---
 
