@@ -159,8 +159,12 @@ export default function ContactsPage() {
               <p className="text-sm text-gray-400">
                 {importing ? 'Importing…' : isDragActive ? 'Drop CSV here' : 'Drop CSV or click to import'}
               </p>
-              <p className="text-xs text-gray-600 mt-1">Columns: name, phone, email</p>
+              <p className="text-xs text-gray-600 mt-1">Columns: name, phone, email (link, group, dll otomatis)</p>
             </div>
+            <a href="/contact-template.csv" download
+              className="inline-flex items-center gap-1.5 mt-3 text-xs text-brand-400 hover:text-brand-300 transition-colors">
+              📄 Download template CSV
+            </a>
           </div>
 
           {/* Add contact */}
