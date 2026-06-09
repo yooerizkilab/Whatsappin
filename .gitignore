@@ -1,6 +1,3 @@
-# Infrastructure config (Docker, Grafana, Prometheus etc)
-/Infrastruktur/
-
 # Dependency directories
 node_modules/
 /.pnp
