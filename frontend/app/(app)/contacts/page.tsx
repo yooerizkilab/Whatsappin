@@ -17,27 +17,52 @@ export default function ContactsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedGroup, setSelectedGroup] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalContacts, setTotalContacts] = useState(0);
   const [newGroup, setNewGroup] = useState('');
   const [form, setForm] = useState({ name: '', phone: '', email: '', groupId: '', tagIds: [] as string[] });
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [groupsPage, setGroupsPage] = useState(1);
+  const [groupsHasMore, setGroupsHasMore] = useState(false);
+  const [groupsLoadingMore, setGroupsLoadingMore] = useState(false);
 
   const load = async () => {
     const [cR, gR, tR] = await Promise.all([
-        contactAPI.list({ 
-            groupId: selectedGroup || undefined, 
-            tagId: selectedTag || undefined 
-        }), 
-        contactAPI.listGroups(),
+        contactAPI.list({
+            groupId: selectedGroup || undefined,
+            tagId: selectedTag || undefined,
+            page,
+            pageSize: 50,
+        }),
+        contactAPI.listGroups({ page: 1, pageSize: 20 }),
         tagAPI.list()
     ]);
     setContacts(cR.data.data);
+    setTotalPages(cR.data.pagination.totalPages);
+    setTotalContacts(cR.data.pagination.total);
     setGroups(gR.data.data);
+    setGroupsHasMore(gR.data.pagination?.page < gR.data.pagination?.totalPages);
+    setGroupsPage(1);
     setTags(tR.data.data);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [selectedGroup, selectedTag]);
+  const loadMoreGroups = async () => {
+    setGroupsLoadingMore(true);
+    const nextPage = groupsPage + 1;
+    const res = await contactAPI.listGroups({ page: nextPage, pageSize: 20 });
+    setGroups(prev => [...prev, ...res.data.data]);
+    setGroupsPage(nextPage);
+    setGroupsHasMore(nextPage < res.data.pagination.totalPages);
+    setGroupsLoadingMore(false);
+  };
+
+  useEffect(() => { load(); }, [selectedGroup, selectedTag, page]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => { setPage(1); }, [selectedGroup, selectedTag]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +130,7 @@ export default function ContactsPage() {
               <button
                 onClick={() => setSelectedGroup('')}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${!selectedGroup ? 'bg-brand-700 text-white' : 'text-gray-400 hover:bg-gray-800'}`}
-              >All Contacts ({contacts.length})</button>
+              >All Contacts ({totalContacts})</button>
               {groups.map((g) => (
                 <div key={g.id} className="flex items-center gap-1">
                   <button onClick={() => setSelectedGroup(g.id)}
@@ -117,6 +142,15 @@ export default function ContactsPage() {
                   </button>
                 </div>
               ))}
+              {groupsHasMore && (
+                <button
+                  onClick={loadMoreGroups}
+                  disabled={groupsLoadingMore}
+                  className="w-full text-center px-3 py-2 rounded-lg text-sm text-brand-400 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                >
+                  {groupsLoadingMore ? 'Loading…' : 'Muat Lebih Banyak'}
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               <input className="input flex-1 text-sm" placeholder="New group..." value={newGroup}
@@ -209,10 +243,11 @@ export default function ContactsPage() {
 
         {/* Contact list */}
         <div className="lg:col-span-2 card">
-          <h2 className="section-title mb-4">Contacts ({contacts.length})</h2>
+          <h2 className="section-title mb-4">Contacts ({totalContacts})</h2>
           {loading ? <p className="text-gray-500 text-sm">Loading…</p>
             : contacts.length === 0 ? <p className="text-gray-500 text-sm">No contacts found.</p>
             : (
+              <>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -237,8 +272,8 @@ export default function ContactsPage() {
                         <td className="py-2.5 pr-4">
                             <div className="flex flex-wrap gap-1">
                                 {c.tags?.map(t => (
-                                    <span 
-                                        key={t.id} 
+                                    <span
+                                        key={t.id}
                                         className="px-1.5 py-0.5 rounded text-[10px] font-medium border"
                                         style={{ backgroundColor: `${t.color}15`, borderColor: `${t.color}40`, color: t.color }}
                                     >
@@ -255,6 +290,51 @@ export default function ContactsPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-800 mt-4">
+                <p className="text-xs text-gray-500">
+                  Showing {(page - 1) * 50 + 1}-{Math.min(page * 50, totalContacts)} of {totalContacts}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed enabled:hover:bg-gray-800 text-gray-400"
+                  >
+                    ← Previous
+                  </button>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                        .map((p, idx, arr) => (
+                          <span key={p} className="flex items-center gap-1">
+                            {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-gray-600 text-xs">…</span>}
+                            <button
+                              onClick={() => setPage(p)}
+                              className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                                page === p
+                                  ? 'bg-brand-700 text-white'
+                                  : 'text-gray-400 hover:bg-gray-800'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed enabled:hover:bg-gray-800 text-gray-400"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+              </>
             )}
         </div>
       </div>

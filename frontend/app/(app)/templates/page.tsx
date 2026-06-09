@@ -12,9 +12,29 @@ export default function TemplatesPage() {
   const [form, setForm] = useState({ name: '', content: '', variables: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [templatePage, setTemplatePage] = useState(1);
+  const [templateHasMore, setTemplateHasMore] = useState(false);
+  const [templateLoadingMore, setTemplateLoadingMore] = useState(false);
 
-  const load = () =>
-    templateAPI.list().then((r) => { setTemplates(r.data.data); setLoading(false); });
+  const load = async (append = false) => {
+    const targetPage = append ? templatePage + 1 : 1;
+    const r = await templateAPI.list({ page: targetPage, pageSize: 20 });
+    if (append) {
+      setTemplates(prev => [...prev, ...r.data.data]);
+      setTemplatePage(targetPage);
+    } else {
+      setTemplates(r.data.data);
+      setTemplatePage(1);
+    }
+    setTemplateHasMore(targetPage < r.data.pagination.totalPages);
+    if (!append) setLoading(false);
+  };
+
+  const handleLoadMoreTemplates = async () => {
+    setTemplateLoadingMore(true);
+    await load(true);
+    setTemplateLoadingMore(false);
+  };
 
   useEffect(() => { load(); }, []);
 
@@ -88,6 +108,15 @@ export default function TemplatesPage() {
                   </div>
                 ))}
               </div>
+            )}
+            {templateHasMore && (
+              <button
+                onClick={handleLoadMoreTemplates}
+                disabled={templateLoadingMore}
+                className="w-full text-center py-3 text-sm text-brand-400 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 mt-2"
+              >
+                {templateLoadingMore ? 'Loading…' : 'Muat Lebih Banyak'}
+              </button>
             )}
         </div>
 

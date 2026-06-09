@@ -1,8 +1,13 @@
 import { prisma } from '../config/prisma';
 
 export const templateRepository = {
-    async findAll(userId: string) {
-        return prisma.template.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+    async findAll(userId: string, skip = 0, take = 20) {
+        const where = { userId };
+        const [data, total] = await prisma.$transaction([
+            prisma.template.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take }),
+            prisma.template.count({ where }),
+        ]);
+        return { data, total };
     },
 
     async findById(id: string) {

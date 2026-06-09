@@ -7,9 +7,23 @@ import { isValidPhone, normalizePhone } from '../utils/phone';
 export const contactController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
         const { ownerId } = request.user;
-        const { groupId, tagId } = request.query as { groupId?: string; tagId?: string };
-        const contacts = await contactRepository.findAll(ownerId, groupId, tagId);
-        return reply.send({ success: true, data: contacts });
+        const { groupId, tagId, page: pageStr, pageSize: pageSizeStr } = request.query as {
+            groupId?: string; tagId?: string; page?: string; pageSize?: string
+        };
+        const page = Math.max(1, parseInt(pageStr || '1', 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr || '50', 10) || 50));
+        const skip = (page - 1) * pageSize;
+        const result = await contactRepository.findAll(ownerId, groupId, tagId, skip, pageSize);
+        return reply.send({
+            success: true,
+            data: result.data,
+            pagination: {
+                page,
+                pageSize,
+                total: result.total,
+                totalPages: Math.ceil(result.total / pageSize),
+            }
+        });
     },
 
     async create(request: FastifyRequest, reply: FastifyReply) {
@@ -146,8 +160,21 @@ export const contactController = {
 
     async listGroups(request: FastifyRequest, reply: FastifyReply) {
         const { ownerId } = request.user;
-        const groups = await contactRepository.findGroups(ownerId);
-        return reply.send({ success: true, data: groups });
+        const { page: pageStr, pageSize: pageSizeStr } = request.query as { page?: string; pageSize?: string };
+        const page = Math.max(1, parseInt(pageStr || '1', 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr || '20', 10) || 20));
+        const skip = (page - 1) * pageSize;
+        const result = await contactRepository.findGroups(ownerId, skip, pageSize);
+        return reply.send({
+            success: true,
+            data: result.data,
+            pagination: {
+                page,
+                pageSize,
+                total: result.total,
+                totalPages: Math.ceil(result.total / pageSize),
+            }
+        });
     },
 
     async createGroup(request: FastifyRequest, reply: FastifyReply) {

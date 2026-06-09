@@ -22,6 +22,10 @@ export default function BlastPage() {
   const [groups, setGroups] = useState<any[]>([]);
   const [jobs, setJobs] = useState<BlastJob[]>([]);
   const [loading, setLoading] = useState(false);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsPage, setJobsPage] = useState(1);
+  const [jobsHasMore, setJobsHasMore] = useState(false);
+  const [jobsLoadingMore, setJobsLoadingMore] = useState(false);
   const [form, setForm] = useState({
     deviceId: '', name: '', message: '', groupId: '', templateId: '', scheduledAt: '',
     type: 'TEXT', mediaUrl: ''
@@ -31,16 +35,30 @@ export default function BlastPage() {
   useEffect(() => {
     Promise.all([
       deviceAPI.list(),
-      templateAPI.list(),
-      contactAPI.listGroups(),
-      blastAPI.list(),
-    ]).then(([devR, tmplR, grpR, jobR]) => {
+      templateAPI.list({ pageSize: 999 }),
+      contactAPI.listGroups({ pageSize: 999 }),
+    ]).then(([devR, tmplR, grpR]) => {
       setDevices(devR.data.data);
       setTemplates(tmplR.data.data);
       setGroups(grpR.data.data);
-      setJobs(jobR.data.data);
+    });
+    blastAPI.list({ page: 1, pageSize: 20 }).then((r) => {
+      setJobs(r.data.data);
+      setJobsHasMore(r.data.pagination?.page < r.data.pagination?.totalPages);
+      setJobsPage(1);
+      setJobsLoading(false);
     });
   }, []);
+
+  const loadMoreJobs = async () => {
+    setJobsLoadingMore(true);
+    const nextPage = jobsPage + 1;
+    const r = await blastAPI.list({ page: nextPage, pageSize: 20 });
+    setJobs(prev => [...prev, ...r.data.data]);
+    setJobsPage(nextPage);
+    setJobsHasMore(nextPage < r.data.pagination.totalPages);
+    setJobsLoadingMore(false);
+  };
 
   const handleTemplateSelect = (id: string) => {
     const t = templates.find((t) => t.id === id);
@@ -53,8 +71,10 @@ export default function BlastPage() {
     try {
       await blastAPI.create(form);
       toast.success('Blast job created!');
-      const jobR = await blastAPI.list();
+      const jobR = await blastAPI.list({ page: 1, pageSize: 20 });
       setJobs(jobR.data.data);
+      setJobsHasMore(jobR.data.pagination?.page < jobR.data.pagination?.totalPages);
+      setJobsPage(1);
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Failed to create blast');
     } finally {
@@ -75,7 +95,10 @@ export default function BlastPage() {
     try {
       await blastAPI.deleteJob(id);
       toast.success('Blast job deleted');
-      setJobs((prev) => prev.filter((j) => j.id !== id));
+      const jobR = await blastAPI.list({ page: 1, pageSize: 20 });
+      setJobs(jobR.data.data);
+      setJobsHasMore(jobR.data.pagination?.page < jobR.data.pagination?.totalPages);
+      setJobsPage(1);
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Failed to delete blast');
     }
@@ -205,7 +228,9 @@ export default function BlastPage() {
         {/* Job history */}
         <div className="card">
           <h2 className="section-title mb-4">Blast History</h2>
-          {jobs.length === 0 ? (
+          {jobsLoading ? (
+            <p className="text-gray-500 text-sm">Loading…</p>
+          ) : jobs.length === 0 ? (
             <p className="text-gray-500 text-sm">No blast jobs yet.</p>
           ) : (
             <div className="space-y-3">
@@ -232,6 +257,15 @@ export default function BlastPage() {
                   </div>
                 </div>
               ))}
+              {jobsHasMore && (
+                <button
+                  onClick={loadMoreJobs}
+                  disabled={jobsLoadingMore}
+                  className="w-full text-center py-3 text-sm text-brand-400 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {jobsLoadingMore ? 'Loading…' : 'Muat Lebih Banyak'}
+                </button>
+              )}
             </div>
           )}
         </div>

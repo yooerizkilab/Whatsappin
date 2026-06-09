@@ -93,7 +93,7 @@ export const blastAPI = {
         templateId?: string;
         scheduledAt?: string;
     }) => api.post('/messages/blast', data),
-    list: () => api.get('/messages/blast'),
+    list: (params?: { page?: number; pageSize?: number }) => api.get('/messages/blast', { params }),
     getJob: (id: string) => api.get(`/messages/blast/${id}`),
     downloadReport: (id: string) => api.get(`/messages/blast/${id}/report`, { responseType: 'blob' }),
     deleteJob: (id: string) => api.delete(`/messages/blast/${id}`),
@@ -101,7 +101,7 @@ export const blastAPI = {
 
 // ── Templates ─────────────────────────────────────────────
 export const templateAPI = {
-    list: () => api.get('/templates'),
+    list: (params?: { page?: number; pageSize?: number }) => api.get('/templates', { params }),
     create: (data: { name: string; content: string; variables?: string[] }) =>
         api.post('/templates', data),
     update: (id: string, data: Partial<{ name: string; content: string; variables: string[] }>) =>
@@ -111,7 +111,7 @@ export const templateAPI = {
 
 // ── Contacts ──────────────────────────────────────────────
 export const contactAPI = {
-    list: (params?: { groupId?: string; tagId?: string }) => api.get('/contacts', { params }),
+    list: (params?: { groupId?: string; tagId?: string; page?: number; pageSize?: number }) => api.get('/contacts', { params }),
     create: (data: { name: string; phone: string; email?: string; groupId?: string; tagIds?: string[] }) =>
         api.post('/contacts', data),
     update: (id: string, data: Partial<{ name: string; phone: string; email: string; groupId: string; tagIds: string[] }>) =>
@@ -125,7 +125,7 @@ export const contactAPI = {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
-    listGroups: () => api.get('/contacts/groups'),
+    listGroups: (params?: { page?: number; pageSize?: number }) => api.get('/contacts/groups', { params }),
     createGroup: (name: string) => api.post('/contacts/groups', { name }),
     deleteGroup: (id: string) => api.delete(`/contacts/groups/${id}`),
 };

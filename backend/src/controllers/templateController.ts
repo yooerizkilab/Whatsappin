@@ -4,8 +4,21 @@ import { templateRepository } from '../repositories/templateRepository';
 export const templateController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
         const { ownerId } = request.user;
-        const templates = await templateRepository.findAll(ownerId);
-        return reply.send({ success: true, data: templates });
+        const { page: pageStr, pageSize: pageSizeStr } = request.query as { page?: string; pageSize?: string };
+        const page = Math.max(1, parseInt(pageStr || '1', 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, parseInt(pageSizeStr || '20', 10) || 20));
+        const skip = (page - 1) * pageSize;
+        const result = await templateRepository.findAll(ownerId, skip, pageSize);
+        return reply.send({
+            success: true,
+            data: result.data,
+            pagination: {
+                page,
+                pageSize,
+                total: result.total,
+                totalPages: Math.ceil(result.total / pageSize),
+            }
+        });
     },
 
     async create(request: FastifyRequest, reply: FastifyReply) {

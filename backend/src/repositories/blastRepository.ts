@@ -26,16 +26,23 @@ export const blastRepository = {
         return prisma.blastRecipient.createMany({ data: recipients });
     },
 
-    async findJobsByUser(userId: string) {
-        return prisma.blastJob.findMany({
-            where: { userId },
-            include: {
-                device: { select: { name: true } },
-                template: { select: { name: true } },
-                _count: { select: { recipients: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
+    async findJobsByUser(userId: string, skip = 0, take = 20) {
+        const where = { userId };
+        const [data, total] = await prisma.$transaction([
+            prisma.blastJob.findMany({
+                where,
+                include: {
+                    device: { select: { name: true } },
+                    template: { select: { name: true } },
+                    _count: { select: { recipients: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.blastJob.count({ where }),
+        ]);
+        return { data, total };
     },
 
     async findJobById(id: string) {

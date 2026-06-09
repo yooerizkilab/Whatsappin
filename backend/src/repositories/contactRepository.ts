@@ -1,16 +1,23 @@
 import { prisma } from '../config/prisma';
 
 export const contactRepository = {
-    async findAll(userId: string, groupId?: string, tagId?: string) {
-        return prisma.contact.findMany({
-            where: {
-                userId,
-                ...(groupId && { groupId }),
-                ...(tagId && { tags: { some: { id: tagId } } })
-            },
-            include: { group: true, tags: true },
-            orderBy: { name: 'asc' },
-        });
+    async findAll(userId: string, groupId?: string, tagId?: string, skip = 0, take = 50) {
+        const where = {
+            userId,
+            ...(groupId && { groupId }),
+            ...(tagId && { tags: { some: { id: tagId } } })
+        };
+        const [data, total] = await prisma.$transaction([
+            prisma.contact.findMany({
+                where,
+                include: { group: true, tags: true },
+                orderBy: { name: 'asc' },
+                skip,
+                take,
+            }),
+            prisma.contact.count({ where }),
+        ]);
+        return { data, total };
     },
 
     async findById(id: string) {
@@ -48,8 +55,13 @@ export const contactRepository = {
         return prisma.contact.delete({ where: { id } });
     },
 
-    async findGroups(userId: string) {
-        return prisma.contactGroup.findMany({ where: { userId }, orderBy: { name: 'asc' } });
+    async findGroups(userId: string, skip = 0, take = 20) {
+        const where = { userId };
+        const [data, total] = await prisma.$transaction([
+            prisma.contactGroup.findMany({ where, orderBy: { name: 'asc' }, skip, take }),
+            prisma.contactGroup.count({ where }),
+        ]);
+        return { data, total };
     },
 
     async findGroupById(id: string) {
