@@ -71,18 +71,15 @@ export const blastController = {
             return reply.status(400).send({ success: false, message: 'No contacts found for blast' });
         }
 
-        const uniqueContactsByPhone = new Map<string, any>();
-        for (const contact of contacts) {
+        const resolvedRecipients = contacts.map((contact: any) => {
             const normalizedPhone = normalizePhone(contact.phone);
-            if (!normalizedPhone || uniqueContactsByPhone.has(normalizedPhone)) continue;
-            uniqueContactsByPhone.set(normalizedPhone, { ...contact, phone: normalizedPhone });
-        }
-
-        const resolvedRecipients = Array.from(uniqueContactsByPhone.values()).map((contact: any) => ({
-            contactId: contact.id,
-            phone: contact.phone,
-            message: resolveTemplateFromContact(message, contact),
-        }));
+            if (!normalizedPhone) return null;
+            return {
+                contactId: contact.id,
+                phone: normalizedPhone,
+                message: resolveTemplateFromContact(message, contact),
+            };
+        }).filter(Boolean) as { contactId?: string; phone: string; message: string }[];
 
         if (resolvedRecipients.length === 0) {
             return reply.status(400).send({ success: false, message: 'No valid contacts found for blast' });
