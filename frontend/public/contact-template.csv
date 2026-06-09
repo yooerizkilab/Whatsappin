@@ -1,4 +1,6 @@
 name,phone,email,link,group
-Rizki,628123456789,rizki@email.com,https://example.com/undangan/rizki,Invitation
-Virdha,628987654321,virdha@email.com,https://example.com/undangan/virdha,Invitation
-Budi,628555123456,budi@email.com,,Customers
+Joko Widodo,628123456789,joko@email.com,https://example.com/undangan/joko,Undangan
+Susi Susanti,628987654321,susi@email.com,https://example.com/undangan/susi,Undangan
+Budi Santoso,628555123456,budi@email.com,,Pelanggan
+Siti Nurhaliza,628777888999,siti@email.com,https://example.com/undangan/siti,Undangan
+Ahmad Rizal,628111222333,ahmad@email.com,,Pelanggan
