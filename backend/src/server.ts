@@ -181,4 +181,9 @@ async function start() {
     process.on('SIGINT', shutdown);
 }
 
-start();
+// ── Run server only if executed directly ──────────────────────────
+if (require.main === module) {
+    start();
+}
+
+export { buildServer, start };
