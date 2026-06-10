@@ -21,7 +21,9 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
                 workingHoursEnabled: (apiKey.user as any).workingHoursEnabled,
                 workingHoursStart: (apiKey.user as any).workingHoursStart,
                 workingHoursEnd: (apiKey.user as any).workingHoursEnd,
-                timezone: (apiKey.user as any).timezone || 'UTC'
+                timezone: (apiKey.user as any).timezone || 'UTC',
+                subscriptionStatus: apiKey.user.subscriptionStatus,
+                subscriptionPlanId: apiKey.user.subscriptionPlanId
             };
             return;
         }
@@ -40,7 +42,9 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
             workingHoursEnabled: payload.workingHoursEnabled || false,
             workingHoursStart: payload.workingHoursStart || '09:00',
             workingHoursEnd: payload.workingHoursEnd || '17:00',
-            timezone: payload.timezone || 'UTC'
+            timezone: payload.timezone || 'UTC',
+            subscriptionStatus: payload.subscriptionStatus,
+            subscriptionPlanId: payload.subscriptionPlanId
         };
     } catch (err) {
         reply.status(401).send({ success: false, message: 'Unauthorized' });
@@ -51,5 +55,19 @@ export async function isAdmin(request: FastifyRequest, reply: FastifyReply) {
     const user = request.user as { role: string };
     if (user.role !== 'ADMIN') {
         return reply.status(403).send({ success: false, message: 'Forbidden: Admin access required' });
+    }
+}
+
+export async function hasActiveSubscription(request: FastifyRequest, reply: FastifyReply) {
+    const user = request.user as { subscriptionStatus: string, role: string };
+
+    // Admins are exempt from subscription checks
+    if (user.role === 'ADMIN') return;
+
+    if (user.subscriptionStatus !== 'ACTIVE') {
+        return reply.status(403).send({
+            success: false,
+            message: 'Forbidden: Active subscription required. Please check your billing status.'
+        });
     }
 }

@@ -24,7 +24,9 @@ export const authController = {
                 email: user.email,
                 role: user.role,
                 parentId: (user as any).parentId,
-                permissions: (user as any).permissions
+                permissions: (user as any).permissions,
+                subscriptionStatus: user.subscriptionStatus,
+                subscriptionPlanId: user.subscriptionPlanId
             },
             { expiresIn: '7d' }
         );
@@ -39,7 +41,9 @@ export const authController = {
                     name: user.name,
                     role: user.role,
                     parentId: (user as any).parentId,
-                    permissions: (user as any).permissions
+                    permissions: (user as any).permissions,
+                    subscriptionStatus: user.subscriptionStatus,
+                    subscriptionPlanId: user.subscriptionPlanId
                 },
             },
         });
