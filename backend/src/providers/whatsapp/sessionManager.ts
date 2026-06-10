@@ -10,7 +10,7 @@ import { Boom } from '@hapi/boom';
 import * as fs from 'fs';
 import * as path from 'path';
 import pino from 'pino';
-import { env } from '../config/env';
+import { env } from '../../config/env';
 import { wsServer } from '../../websocket/wsServer';
 import { prisma } from '../../config/prisma';
 import { CONSTANTS } from '../../config/constants';
@@ -28,7 +28,7 @@ export interface DeviceSession {
     deviceId: string;
 }
 
-class SessionManager implements IWhatsappProvider {
+export class SessionManager implements IWhatsappProvider {
     private sessions = new Map<string, DeviceSession>();
     private reconnectTimers = new Map<string, NodeJS.Timeout>();
 
@@ -338,7 +338,7 @@ class SessionManager implements IWhatsappProvider {
             }
             this.sessions.delete(deviceId);
         }
-        
+
         if (env.AWS_S3_BUCKET) {
             await deleteS3Session(deviceId);
         } else {
@@ -458,7 +458,7 @@ class SessionManager implements IWhatsappProvider {
             // ── 2. AI fallback ─────────────────────────────────────
             if (!replied && autoResponder.aiProvider) {
                 // logger.debug(`[AutoResponder] No keyword matched. Falling back to AI (${autoResponder.aiProvider})...`);
-                
+
                 // Get Knowledge Base ID if active
                 const device: any = autoResponder.device;
                 const kbId = device?.knowledgeBase?.isActive ? device.knowledgeBase.id : null;

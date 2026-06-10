@@ -14,8 +14,8 @@ import {
     ListObjectsV2Command,
     DeleteObjectsCommand
 } from '@aws-sdk/client-s3';
-import { env } from '../config/env';
-import { logger } from '../utils/logger';
+import { env } from '../../config/env';
+import { logger } from '../../utils/logger';
 
 const s3 = new S3Client({
     region: env.AWS_REGION || 'ap-southeast-1',
