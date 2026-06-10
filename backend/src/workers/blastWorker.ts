@@ -168,6 +168,7 @@ export async function startBlastWorker() {
             stalledInterval: 120000,
             lockDuration: 120000,
             maxStalledCount: 0,
+            metrics: { maxDataPoints: 125 },
         }
     );
 

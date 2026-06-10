@@ -36,6 +36,20 @@ import { startBlastWorker } from './workers/blastWorker';
 import { startCronWorker } from './workers/cronWorker';
 import { logger } from './utils/logger';
 
+// ── Suppress known libsignal noise from console.error ────────────
+const _origConsoleError = console.error;
+console.error = (...args: any[]) => {
+    const msg = args.join(' ');
+    if (
+        msg.includes('Failed to decrypt message') ||
+        msg.includes('Bad MAC') ||
+        msg.includes('Session error')
+    ) {
+        return; // suppress libsignal decryption noise
+    }
+    _origConsoleError(...args);
+};
+
 async function buildServer() {
     const fastify = Fastify({
         logger: true,
