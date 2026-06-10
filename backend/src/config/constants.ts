@@ -1,0 +1,20 @@
+export const CONSTANTS = {
+    // Blast/Message Delays
+    DEFAULT_MESSAGE_DELAY_MS: 3000,
+    RECONNECT_TIMEOUT_MS: 5000,
+    WORKER_DEADLINE_MS: 15000,
+    WORKER_WAIT_MS: 500,
+
+    // Batching
+    BLAST_BATCH_SIZE: 500,
+
+    // Security & Limits
+    DEFAULT_FREE_PLAN_LIMIT: 100,
+    MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024, // 10MB
+    RATE_LIMIT_MAX: 100,
+    RATE_LIMIT_WINDOW: '1 minute',
+
+    // BullMQ Defaults
+    STALLED_INTERVAL: 120000,
+    LOCK_DURATION: 120000,
+};
