@@ -46,8 +46,9 @@ export const deviceController = {
 
     async getStatus(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.params as { id: string };
+        const { ownerId } = request.user;
         const device = await deviceRepository.findById(id);
-        if (!device) return reply.status(404).send({ success: false, message: 'Device not found' });
+        if (!device || device.userId !== ownerId) return reply.status(404).send({ success: false, message: 'Device not found' });
         return reply.send({ success: true, data: { status: device.status, phoneNumber: device.phoneNumber } });
     },
 };
