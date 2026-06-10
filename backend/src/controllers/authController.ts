@@ -3,6 +3,7 @@ import { comparePassword, hashPassword } from '../utils/hash';
 import { userRepository } from '../repositories/userRepository';
 import { sendMail } from '../services/mailer';
 import { env } from '../config/env';
+import { AppError } from '../utils/errors';
 
 export const authController = {
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -10,12 +11,12 @@ export const authController = {
 
         const user = await userRepository.findByEmail(email);
         if (!user) {
-            return reply.status(401).send({ success: false, message: 'Invalid credentials' });
+            throw new AppError('Invalid credentials', 401);
         }
 
         const valid = await comparePassword(password, user.password);
         if (!valid) {
-            return reply.status(401).send({ success: false, message: 'Invalid credentials' });
+            throw new AppError('Invalid credentials', 401);
         }
 
         const token = await reply.jwtSign(
@@ -58,7 +59,7 @@ export const authController = {
 
         const existing = await userRepository.findByEmail(email);
         if (existing) {
-            return reply.status(400).send({ success: false, message: 'Email already registered' });
+            throw new AppError('Email already registered', 400);
         }
 
         const user = await userRepository.create({
@@ -87,7 +88,7 @@ export const authController = {
     async me(request: FastifyRequest, reply: FastifyReply) {
         const { id } = request.user as { id: string };
         const user = await userRepository.findById(id);
-        if (!user) return reply.status(404).send({ success: false, message: 'User not found' });
+        if (!user) throw new AppError('User not found', 404);
         const { password: _, ...safe } = user;
         return reply.send({ success: true, data: safe });
     },
@@ -108,7 +109,7 @@ export const authController = {
         if (email) {
             const existing = await userRepository.findByEmail(email);
             if (existing && existing.id !== id) {
-                return reply.status(400).send({ success: false, message: 'Email already in use' });
+                throw new AppError('Email already in use', 400);
             }
         }
 
@@ -127,11 +128,11 @@ export const authController = {
         };
 
         const user = await userRepository.findById(id);
-        if (!user) return reply.status(404).send({ success: false, message: 'User not found' });
+        if (!user) throw new AppError('User not found', 404);
 
         const valid = await comparePassword(currentPassword, user.password);
         if (!valid) {
-            return reply.status(400).send({ success: false, message: 'Invalid current password' });
+            throw new AppError('Invalid current password', 400);
         }
 
         await userRepository.updatePassword(id, newPassword);
@@ -140,7 +141,7 @@ export const authController = {
 
     async forgotPassword(request: FastifyRequest, reply: FastifyReply) {
         const { email } = request.body as { email: string };
-        if (!email) return reply.status(400).send({ success: false, message: 'Email is required' });
+        if (!email) throw new AppError('Email is required', 400);
 
         const user = await userRepository.findByEmail(email);
         if (!user) {
@@ -186,29 +187,30 @@ export const authController = {
     async resetPassword(request: FastifyRequest, reply: FastifyReply) {
         const { token, password } = request.body as { token: string; password: string };
         if (!token || !password) {
-            return reply.status(400).send({ success: false, message: 'Token and password are required' });
+            throw new AppError('Token and password are required', 400);
         }
 
         try {
             const payload = request.server.jwt.verify<{ id: string; purpose: string }>(token);
 
             if (payload.purpose !== 'password_reset') {
-                return reply.status(400).send({ success: false, message: 'Invalid token' });
+                throw new AppError('Invalid token', 400);
             }
 
             const user = await userRepository.findById(payload.id);
             if (!user) {
-                return reply.status(400).send({ success: false, message: 'User not found' });
+                throw new AppError('User not found', 400);
             }
 
             await userRepository.updatePassword(payload.id, password);
 
             return reply.send({ success: true, message: 'Password reset successfully' });
         } catch (err: any) {
+            if (err instanceof AppError) throw err;
             if (err.code === 'FAST_JWT_EXPIRED') {
-                return reply.status(400).send({ success: false, message: 'Reset token has expired. Please request a new one.' });
+                throw new AppError('Reset token has expired. Please request a new one.', 400);
             }
-            return reply.status(400).send({ success: false, message: 'Invalid or expired reset token' });
+            throw new AppError('Invalid or expired reset token', 400);
         }
     },
 };

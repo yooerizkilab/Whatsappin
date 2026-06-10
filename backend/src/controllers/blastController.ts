@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { blastRepository } from '../repositories/blastRepository';
 import { blastService } from '../services/blastService';
 import { prisma } from '../config/prisma';
+import { AppError } from '../utils/errors';
 
 export const blastController = {
     async create(request: FastifyRequest, reply: FastifyReply) {
@@ -9,7 +10,7 @@ export const blastController = {
         const body = request.body as any;
 
         if (!body.deviceId || !body.name || !body.message) {
-            return reply.status(400).send({ success: false, message: 'deviceId, name, and message are required' });
+            throw new AppError('deviceId, name, and message are required', 400);
         }
 
         try {
@@ -29,13 +30,14 @@ export const blastController = {
                 message: result.scheduled ? 'Blast scheduled' : 'Blast queued',
             });
         } catch (err: any) {
+            if (err instanceof AppError) throw err;
             if (err.message.includes('Quota Exceeded')) {
-                return reply.status(403).send({ success: false, message: err.message });
+                throw new AppError(err.message, 403);
             }
             if (err.message.includes('not found') || err.message.includes('denied')) {
-                return reply.status(404).send({ success: false, message: err.message });
+                throw new AppError(err.message, 404);
             }
-            return reply.status(400).send({ success: false, message: err.message });
+            throw new AppError(err.message, 400);
         }
     },
 
@@ -62,8 +64,8 @@ export const blastController = {
         const { id } = request.params as { id: string };
         const { ownerId, role } = request.user;
         const job = await blastRepository.findJobById(id);
-        if (!job) return reply.status(404).send({ success: false, message: 'Blast job not found' });
-        if (job.userId !== ownerId && role !== 'ADMIN') return reply.status(403).send({ success: false, message: 'Forbidden' });
+        if (!job) throw new AppError('Blast job not found', 404);
+        if (job.userId !== ownerId && role !== 'ADMIN') throw new AppError('Forbidden', 403);
         const counts = await blastRepository.countRecipients(id);
         return reply.send({ success: true, data: { ...job, stats: counts } });
     },
@@ -73,8 +75,8 @@ export const blastController = {
         const { ownerId, role } = request.user;
 
         const job = await blastRepository.findJobById(id);
-        if (!job) return reply.status(404).send({ success: false, message: 'Blast job not found' });
-        if (job.userId !== ownerId && role !== 'ADMIN') return reply.status(403).send({ success: false, message: 'Forbidden' });
+        if (!job) throw new AppError('Blast job not found', 404);
+        if (job.userId !== ownerId && role !== 'ADMIN') throw new AppError('Forbidden', 403);
 
         const recipients = await prisma.blastRecipient.findMany({
             where: { blastJobId: id },
@@ -111,8 +113,8 @@ export const blastController = {
         const { ownerId, role } = request.user;
 
         const job = await blastRepository.findJobById(id);
-        if (!job) return reply.status(404).send({ success: false, message: 'Blast job not found' });
-        if (job.userId !== ownerId && role !== 'ADMIN') return reply.status(403).send({ success: false, message: 'Forbidden' });
+        if (!job) throw new AppError('Blast job not found', 404);
+        if (job.userId !== ownerId && role !== 'ADMIN') throw new AppError('Forbidden', 403);
 
         await blastRepository.deleteJob(id);
         return reply.send({ success: true, message: 'Blast job deleted' });

@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../config/prisma';
 import { userRepository } from '../repositories/userRepository';
+import { AppError } from '../utils/errors';
 
 export const agentController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
@@ -27,7 +28,7 @@ export const agentController = {
 
         const existing = await userRepository.findByEmail(email);
         if (existing) {
-            return reply.status(400).send({ success: false, message: 'Email already registered' });
+            throw new AppError('Email already registered', 400);
         }
 
         const agent = await userRepository.create({
@@ -54,7 +55,7 @@ export const agentController = {
         });
 
         if (!agent) {
-            return reply.status(404).send({ success: false, message: 'Agent not found' });
+            throw new AppError('Agent not found', 404);
         }
 
         const updateData: any = { name, phone, permissions };
@@ -81,7 +82,7 @@ export const agentController = {
         });
 
         if (!agent) {
-            return reply.status(404).send({ success: false, message: 'Agent not found' });
+            throw new AppError('Agent not found', 404);
         }
 
         await prisma.user.delete({ where: { id: agentId } });

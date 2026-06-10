@@ -5,6 +5,7 @@ import { prisma } from '../config/prisma';
 import { addMessageJob } from '../queues/messageQueue';
 import { calculateDelay } from '../utils/workingHours';
 import { isValidPhone, normalizePhone } from '../utils/phone';
+import { AppError } from '../utils/errors';
 
 export const messageController = {
     async send(request: FastifyRequest, reply: FastifyReply) {
@@ -24,18 +25,18 @@ export const messageController = {
             where: { id: ownerId }
         });
 
-        if (!owner) return reply.status(404).send({ success: false, message: 'Owner not found' });
+        if (!owner) throw new AppError('Owner not found', 404);
 
         // Ownership Check: Ensure device belongs to this owner
         const device = await prisma.device.findFirst({
             where: { id: deviceId, userId: ownerId }
         });
         if (!device) {
-            return reply.status(403).send({ success: false, message: 'Forbidden: Device not found or access denied' });
+            throw new AppError('Forbidden: Device not found or access denied', 403);
         }
 
         if (!isValidPhone(to)) {
-            return reply.status(400).send({ success: false, message: 'Invalid phone number format' });
+            throw new AppError('Invalid phone number format', 400);
         }
 
         const normalizedTo = normalizePhone(to);
@@ -83,7 +84,7 @@ export const messageController = {
         } catch (err: any) {
             await messageRepository.updateStatus(message.id, 'FAILED');
             await messageRepository.addLog(message.id, 'failed', { error: err.message });
-            return reply.status(500).send({ success: false, message: err.message || 'Failed to send message' });
+            throw new AppError(err.message || 'Failed to send message', 500);
         }
     },
 

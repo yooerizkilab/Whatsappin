@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { logger } from '../utils/logger';
 import { deviceRepository } from '../repositories/deviceRepository';
 import { sessionManager } from '../providers/whatsapp/sessionManager';
+import { AppError } from '../utils/errors';
 
 export const deviceController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
@@ -35,7 +36,7 @@ export const deviceController = {
 
         const device = await deviceRepository.findById(id);
         if (!device || device.userId !== ownerId) {
-            return reply.status(404).send({ success: false, message: 'Device not found' });
+            throw new AppError('Device not found', 404);
         }
 
         await sessionManager.destroySession(id);
@@ -48,7 +49,9 @@ export const deviceController = {
         const { id } = request.params as { id: string };
         const { ownerId } = request.user;
         const device = await deviceRepository.findById(id);
-        if (!device || device.userId !== ownerId) return reply.status(404).send({ success: false, message: 'Device not found' });
+        if (!device || device.userId !== ownerId) {
+            throw new AppError('Device not found', 404);
+        }
         return reply.send({ success: true, data: { status: device.status, phoneNumber: device.phoneNumber } });
     },
 };
