@@ -190,7 +190,7 @@ class SessionManager {
                         msg.message.videoMessage?.caption ||
                         '';
 
-                    logger.info(`[WhatsApp] Incoming message to ${deviceId} from ${from}: "${text}"`);
+                    logger.info(`[WhatsApp] Incoming message to ${deviceId} from ${logger.maskPhone(from)}`);
 
                     // Persist to Database
                     try {
@@ -258,7 +258,7 @@ class SessionManager {
         socket.ev.on('call', async (calls) => {
             for (const call of calls) {
                 if (call.status === 'offer') {
-                    logger.info(`[Baileys] Auto-rejecting incoming call from ${call.from} on device ${deviceId}`);
+                    logger.info(`[Baileys] Auto-rejecting incoming call from ${logger.maskPhone(call.from)} on device ${deviceId}`);
                     try {
                         await socket.rejectCall(call.id, call.from);
                     } catch (err: any) {
@@ -273,9 +273,9 @@ class SessionManager {
         const session = this.sessions.get(deviceId);
         if (!session) throw new Error(`Device ${deviceId} is not connected`);
         const jid = to.includes('@') ? to : `${to}@s.whatsapp.net`;
-        logger.info(`[SessionManager] sendTextMessage device=${deviceId} phone=${session.socket.user?.id || 'unknown'} to=${jid} text="${text.substring(0, 50)}..."`);
+        logger.info(`[SessionManager] sendTextMessage device=${deviceId} to=${logger.maskPhone(jid)}`);
         const result = await session.socket.sendMessage(jid, { text });
-        logger.info(`[SessionManager] sendTextMessage OK device=${deviceId} to=${jid} msgId=${(result as any)?.key?.id || 'unknown'}`);
+        logger.info(`[SessionManager] sendTextMessage OK device=${deviceId} to=${logger.maskPhone(jid)}`);
     }
 
     async assertWhatsAppRecipient(deviceId: string, to: string): Promise<void> {
