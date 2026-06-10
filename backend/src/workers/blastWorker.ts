@@ -165,14 +165,14 @@ export async function startBlastWorker() {
         {
             connection: redisConnection as ConnectionOptions,
             concurrency: 5,
+            stalledInterval: 120000,
+            lockDuration: 120000,
+            maxStalledCount: 0,
         }
     );
 
     worker.on('failed', async (job, err) => {
         logger.error(`[Worker] Job ${job?.id} failed:`, err.message);
-        const attempts = job?.opts.attempts || 1;
-        const attemptsMade = job?.attemptsMade || 0;
-        if (attemptsMade < attempts) return;
 
         const recipientId = (job?.data as { recipientId?: string } | undefined)?.recipientId;
         if (!recipientId) return;

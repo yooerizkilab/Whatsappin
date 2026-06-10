@@ -32,6 +32,7 @@ import { knowledgeRoutes } from './routes/knowledge.routes';
 import { wsServer } from './websocket/wsServer';
 import { sessionManager } from './baileys/sessionManager';
 import { prisma } from './config/prisma';
+import { startBlastWorker } from './workers/blastWorker';
 import { startCronWorker } from './workers/cronWorker';
 import { logger } from './utils/logger';
 
@@ -130,6 +131,16 @@ async function start() {
         logger.info(`WhatsApp sessions restored`);
 
         // ── Start Workers ────────────────────────────────
+        // Flush stale BullMQ keys from previous runs to prevent stalled-job loops
+        const staleKeys = await redisConnection.keys('bull:blast-queue*');
+        if (staleKeys.length) {
+            await redisConnection.del(staleKeys);
+            logger.info(`Cleared ${staleKeys.length} stale BullMQ keys`);
+        }
+
+        await startBlastWorker();
+        logger.info(`Blast worker started`);
+
         await startCronWorker();
 
         logger.info(`Server running at http://${env.HOST}:${env.PORT}`);
