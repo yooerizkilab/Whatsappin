@@ -24,8 +24,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, mounted]);
 
-  // Connect WebSocket for the current user
-  useWebSocket(user?.id);
+  // Connect WebSocket for the current user with JWT authentication
+  const { token } = useAuthStore();
+  useWebSocket(user?.id, token || undefined);
 
   if (!mounted || !isAuthenticated) return null;
 

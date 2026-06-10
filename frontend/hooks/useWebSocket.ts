@@ -3,23 +3,26 @@
 import { useEffect, useRef } from 'react';
 import { useDeviceStore } from '@/store/deviceStore';
 
-export function useWebSocket(userId?: string) {
+export function useWebSocket(userId?: string, token?: string) {
     const wsRef = useRef<WebSocket | null>(null);
     const { updateDeviceStatus, setQrCode, clearQrCode } = useDeviceStore();
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId || !token) return;
 
         const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
         const wsUrl = baseUrl.endsWith('/ws') ? baseUrl : `${baseUrl}/ws`;
         let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+        let authenticated = false;
 
         function connect() {
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
+            authenticated = false;
 
             ws.onopen = () => {
-                ws.send(JSON.stringify({ type: 'subscribe', userId }));
+                // First, authenticate with JWT token
+                ws.send(JSON.stringify({ type: 'authenticate', token }));
             };
 
             ws.onmessage = (event) => {
@@ -27,6 +30,23 @@ export function useWebSocket(userId?: string) {
                     const msg = JSON.parse(event.data);
 
                     switch (msg.type) {
+                        case 'authenticated':
+                            authenticated = true;
+                            // Now we can subscribe to devices
+                            ws.send(JSON.stringify({ type: 'subscribe', userId }));
+                            break;
+
+                        case 'subscribed':
+                            // Ready to receive device events
+                            break;
+
+                        case 'error':
+                            // Handle auth errors
+                            if (!authenticated) {
+                                ws.close();
+                            }
+                            break;
+
                         case 'qr_update':
                             setQrCode(msg.data.deviceId, msg.data.qr);
                             break;
@@ -59,6 +79,7 @@ export function useWebSocket(userId?: string) {
 
             ws.onclose = () => {
                 wsRef.current = null;
+                authenticated = false;
                 reconnectTimer = setTimeout(connect, 3000);
             };
 
@@ -76,5 +97,5 @@ export function useWebSocket(userId?: string) {
                 wsRef.current = null;
             }
         };
-    }, [userId]);
+    }, [userId, token]);
 }
