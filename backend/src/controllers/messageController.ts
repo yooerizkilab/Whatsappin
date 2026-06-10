@@ -26,6 +26,14 @@ export const messageController = {
 
         if (!owner) return reply.status(404).send({ success: false, message: 'Owner not found' });
 
+        // Ownership Check: Ensure device belongs to this owner
+        const device = await prisma.device.findFirst({
+            where: { id: deviceId, userId: ownerId }
+        });
+        if (!device) {
+            return reply.status(403).send({ success: false, message: 'Forbidden: Device not found or access denied' });
+        }
+
         if (!isValidPhone(to)) {
             return reply.status(400).send({ success: false, message: 'Invalid phone number format' });
         }
