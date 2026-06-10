@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { messageRepository } from '../repositories/messageRepository';
-import { sessionManager } from '../baileys/sessionManager';
+import { sessionManager } from '../providers/whatsapp/sessionManager';
 import { prisma } from '../config/prisma';
 import { addMessageJob } from '../queues/messageQueue';
 import { calculateDelay } from '../utils/workingHours';

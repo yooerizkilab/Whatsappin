@@ -5,6 +5,7 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import { env } from './config/env';
+import { CONSTANTS } from './config/constants';
 import fastifyWebsocket from '@fastify/websocket';
 import { errorHandler } from './middlewares/errorHandler';
 import fastifyStatic from '@fastify/static';
@@ -30,7 +31,7 @@ import { mediaRoutes } from './routes/media.routes';
 import { agentRoutes } from './routes/agent.routes';
 import { knowledgeRoutes } from './routes/knowledge.routes';
 import { wsServer } from './websocket/wsServer';
-import { sessionManager } from './baileys/sessionManager';
+import { sessionManager } from './providers/whatsapp/sessionManager';
 import { prisma } from './config/prisma';
 import { startBlastWorker, stopBlastWorker } from './workers/blastWorker';
 import { startCronWorker } from './workers/cronWorker';
@@ -69,13 +70,13 @@ async function buildServer() {
     await fastify.register(jwt, { secret: env.JWT_SECRET });
 
     await fastify.register(multipart, {
-        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+        limits: { fileSize: CONSTANTS.MAX_FILE_SIZE_BYTES }, // 10MB
     });
 
     // ── Rate Limiter ─────────────────────────────────────────
     await fastify.register(rateLimit, {
-        max: 100, // Default 100 requests
-        timeWindow: '1 minute',
+        max: CONSTANTS.RATE_LIMIT_MAX, // Default 100 requests
+        timeWindow: CONSTANTS.RATE_LIMIT_WINDOW,
         redis: redisConnection,
         keyGenerator: (request) => {
             return (request.user as any)?.id || request.ip;

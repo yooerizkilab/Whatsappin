@@ -3,7 +3,7 @@ import { Worker, Job, ConnectionOptions } from 'bullmq';
 import { redisConnection } from '../config/redis';
 import { prisma } from '../config/prisma';
 import { logger } from '../utils/logger';
-import { sessionManager } from '../baileys/sessionManager';
+import { sessionManager } from '../providers/whatsapp/sessionManager';
 import { addMessageJob } from '../queues/messageQueue';
 import { messageRepository } from '../repositories/messageRepository';
 

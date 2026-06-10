@@ -2,10 +2,11 @@ import 'dotenv/config';
 import { Worker, Job, ConnectionOptions } from 'bullmq';
 import { redisConnection } from '../config/redis';
 import { env } from '../config/env';
+import { CONSTANTS } from '../config/constants';
 import { addRecipientJob } from '../queues/blastQueue';
 import { prisma } from '../config/prisma';
 import { blastRepository } from '../repositories/blastRepository';
-import { sessionManager } from '../baileys/sessionManager';
+import { sessionManager } from '../providers/whatsapp/sessionManager';
 import { wsServer } from '../websocket/wsServer';
 import { logger } from '../utils/logger';
 
@@ -42,9 +43,9 @@ async function ensureDeviceSession(deviceId: string) {
         }
     }
 
-    const deadline = Date.now() + 15000;
+    const deadline = Date.now() + CONSTANTS.WORKER_DEADLINE_MS;
     while (!hasReadySession() && Date.now() < deadline) {
-        await wait(500);
+        await wait(CONSTANTS.WORKER_WAIT_MS);
     }
 
     if (!hasReadySession()) {
@@ -167,8 +168,8 @@ export async function startBlastWorker() {
         {
             connection: redisConnection as ConnectionOptions,
             concurrency: 5,
-            stalledInterval: 120000,
-            lockDuration: 120000,
+            stalledInterval: CONSTANTS.STALLED_INTERVAL,
+            lockDuration: CONSTANTS.LOCK_DURATION,
             maxStalledCount: 0,
             metrics: { maxDataPoints: 125 },
         }
@@ -198,7 +199,7 @@ export async function stopBlastWorker() {
 }
 
 async function backfillScheduledJobs() {
-    const BATCH_SIZE = 500;
+    const BATCH_SIZE = CONSTANTS.BLAST_BATCH_SIZE;
     let skip = 0;
     let totalBackfilled = 0;
 

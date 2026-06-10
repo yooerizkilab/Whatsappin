@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { logger } from '../utils/logger';
 import { deviceRepository } from '../repositories/deviceRepository';
-import { sessionManager } from '../baileys/sessionManager';
+import { sessionManager } from '../providers/whatsapp/sessionManager';
 
 export const deviceController = {
     async list(request: FastifyRequest, reply: FastifyReply) {
