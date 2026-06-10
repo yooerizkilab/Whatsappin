@@ -197,8 +197,7 @@ export const authController = {
                 return reply.status(400).send({ success: false, message: 'User not found' });
             }
 
-            const hashed = await hashPassword(password);
-            await userRepository.updatePassword(payload.id, hashed);
+            await userRepository.updatePassword(payload.id, password);
 
             return reply.send({ success: true, message: 'Password reset successfully' });
         } catch (err: any) {
