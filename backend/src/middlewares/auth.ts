@@ -7,7 +7,22 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     if (apiKeyHeader) {
         const apiKey = await prisma.apiKey.findUnique({
             where: { key: apiKeyHeader },
-            include: { user: true }
+            select: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        name: true,
+                        subscriptionStatus: true,
+                        subscriptionPlanId: true,
+                        workingHoursEnabled: true,
+                        workingHoursStart: true,
+                        workingHoursEnd: true,
+                        timezone: true
+                    }
+                }
+            }
         });
 
         if (apiKey) {
@@ -18,10 +33,10 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
                 role: apiKey.user.role,
                 name: apiKey.user.name,
                 ownerId: apiKey.user.id, // API Keys are always primary user
-                workingHoursEnabled: (apiKey.user as any).workingHoursEnabled,
-                workingHoursStart: (apiKey.user as any).workingHoursStart,
-                workingHoursEnd: (apiKey.user as any).workingHoursEnd,
-                timezone: (apiKey.user as any).timezone || 'UTC',
+                workingHoursEnabled: apiKey.user.workingHoursEnabled,
+                workingHoursStart: apiKey.user.workingHoursStart,
+                workingHoursEnd: apiKey.user.workingHoursEnd,
+                timezone: apiKey.user.timezone || 'UTC',
                 subscriptionStatus: apiKey.user.subscriptionStatus,
                 subscriptionPlanId: apiKey.user.subscriptionPlanId
             };
