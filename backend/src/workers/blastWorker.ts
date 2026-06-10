@@ -69,13 +69,15 @@ async function completeBlastJobIfDone(blastJobId: string) {
     }
 }
 
+let worker: Worker | null = null;
+
 export async function startBlastWorker() {
     // logger.debug('[Worker] Initializing BullMQ Blast Worker...');
 
     // Backfill scheduled jobs
     await backfillScheduledJobs();
 
-    const worker = new Worker(
+    worker = new Worker(
         'blast-queue',
         async (job: Job) => {
             const { recipientId } = job.data as { recipientId: string };
@@ -186,6 +188,13 @@ export async function startBlastWorker() {
     });
 
     logger.info('[Worker] Blast Worker is now listening for jobs.');
+}
+
+export async function stopBlastWorker() {
+    if (worker) {
+        await worker.close();
+        logger.info('[Worker] Blast Worker stopped.');
+    }
 }
 
 async function backfillScheduledJobs() {

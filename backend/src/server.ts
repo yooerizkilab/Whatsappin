@@ -32,8 +32,9 @@ import { knowledgeRoutes } from './routes/knowledge.routes';
 import { wsServer } from './websocket/wsServer';
 import { sessionManager } from './baileys/sessionManager';
 import { prisma } from './config/prisma';
-import { startBlastWorker } from './workers/blastWorker';
+import { startBlastWorker, stopBlastWorker } from './workers/blastWorker';
 import { startCronWorker } from './workers/cronWorker';
+import { startMessageWorker, stopMessageWorker } from './workers/messageWorker';
 import { logger } from './utils/logger';
 
 // ── Suppress known libsignal noise from console.error ────────────
@@ -155,6 +156,9 @@ async function start() {
         await startBlastWorker();
         logger.info(`Blast worker started`);
 
+        await startMessageWorker();
+        logger.info(`Message worker started`);
+
         await startCronWorker();
 
         logger.info(`Server running at http://${env.HOST}:${env.PORT}`);
@@ -166,6 +170,8 @@ async function start() {
     // ── Graceful shutdown ─────────────────────────────────────
     const shutdown = async () => {
         logger.info('Shutting down gracefully...');
+        await stopBlastWorker();
+        await stopMessageWorker();
         await prisma.$disconnect();
         await fastify.close();
         process.exit(0);
