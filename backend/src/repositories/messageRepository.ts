@@ -66,26 +66,39 @@ export const messageRepository = {
     },
 
     async getChatList(deviceId: string) {
-        // SQL query to get latest message per unique contact (remote)
-        // For simplicity with Prisma, we'll fetch recently active messages and unique them in JS for now
-        // or use raw query for performance later.
-        const messages = await prisma.message.findMany({
-            where: { deviceId },
-            orderBy: { createdAt: 'desc' },
-            distinct: ['to', 'from'], // This is limited in some DBs, let's refine
-            take: 100,
-        });
+        // Fetch latest message per unique conversation partner using raw SQL
+        // This is more efficient than loading all messages and deduping in JS
+        const raw = await prisma.$queryRawUnsafe<Array<{ id: string; remote: string; content: string; to: string; from: string | null; direction: string; status: string; createdAt: Date }>>(`
+            SELECT m.*, COALESCE(m.from, m.to) AS remote
+            FROM messages m
+            INNER JOIN (
+                SELECT
+                    CASE
+                        WHEN direction = 'OUTGOING' THEN \`to\`
+                        ELSE \`from\`
+                    END AS remote_jid,
+                    MAX(created_at) AS max_created
+                FROM messages
+                WHERE device_id = ?
+                GROUP BY remote_jid
+            ) latest
+                ON m.device_id = ?
+                AND m.created_at = latest.max_created
+                AND COALESCE(m.from, m.to) = latest.remote_jid
+            ORDER BY m.created_at DESC
+            LIMIT 100
+        `, deviceId, deviceId);
 
-        // Group by 'remote' phone number
-        const chats: Record<string, any> = {};
-        messages.forEach(msg => {
-            const remote = msg.direction === 'OUTGOING' ? msg.to : msg.from;
-            if (remote && !chats[remote]) {
-                chats[remote] = msg;
-            }
-        });
-
-        return Object.values(chats);
+        return raw.map(row => ({
+            id: row.id,
+            content: row.content,
+            to: row.to,
+            from: row.from,
+            direction: row.direction,
+            status: row.status,
+            createdAt: row.createdAt,
+            remote: row.remote
+        }));
     },
 
     async getChatHistory(deviceId: string, remotePhone: string) {

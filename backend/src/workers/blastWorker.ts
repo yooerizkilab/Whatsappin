@@ -198,36 +198,51 @@ export async function stopBlastWorker() {
 }
 
 async function backfillScheduledJobs() {
-    // logger.debug('[Worker] Checking for unsent recipients to backfill...');
-    const pendingRecipients = await prisma.blastRecipient.findMany({
-        where: { status: 'PENDING' },
-        include: { blastJob: true },
-        orderBy: [
-            { blastJobId: 'asc' },
-            { createdAt: 'asc' },
-        ],
-    });
+    const BATCH_SIZE = 500;
+    let skip = 0;
+    let totalBackfilled = 0;
 
     const blastDelayOffsets = new Map<string, number>();
     const phoneLastDelay = new Map<string, number>();
-    const minSamePhoneGap = env.MESSAGE_DELAY_MS * 6; // ~60s default gap between same-phone sends
+    const minSamePhoneGap = env.MESSAGE_DELAY_MS * 6;
 
-    for (const recipient of pendingRecipients) {
-        const job = recipient.blastJob;
-        const offset = blastDelayOffsets.get(job.id) || 0;
-        const lastForPhone = phoneLastDelay.get(recipient.phone) || 0;
-        const delay = job.scheduledAt ? Math.max(0, new Date(job.scheduledAt).getTime() - Date.now()) : 0;
+    while (true) {
+        const pendingRecipients = await prisma.blastRecipient.findMany({
+            where: { status: 'PENDING' },
+            include: { blastJob: true },
+            orderBy: [
+                { blastJobId: 'asc' },
+                { createdAt: 'asc' },
+            ],
+            take: BATCH_SIZE,
+            skip: skip,
+        });
 
-        const effectiveOffset = Math.max(offset, lastForPhone);
-        await addRecipientJob(recipient.id, delay + effectiveOffset);
+        if (pendingRecipients.length === 0) break;
 
-        const jitter = Math.round(env.MESSAGE_DELAY_MS * (0.6 + Math.random() * 0.8));
-        blastDelayOffsets.set(job.id, offset + jitter);
-        phoneLastDelay.set(recipient.phone, effectiveOffset + minSamePhoneGap);
+        for (const recipient of pendingRecipients) {
+            const job = recipient.blastJob;
+            const offset = blastDelayOffsets.get(job.id) || 0;
+            const lastForPhone = phoneLastDelay.get(recipient.phone) || 0;
+            const delay = job.scheduledAt ? Math.max(0, new Date(job.scheduledAt).getTime() - Date.now()) : 0;
+
+            const effectiveOffset = Math.max(offset, lastForPhone);
+            await addRecipientJob(recipient.id, delay + effectiveOffset);
+
+            const jitter = Math.round(env.MESSAGE_DELAY_MS * (0.6 + Math.random() * 0.8));
+            blastDelayOffsets.set(job.id, offset + jitter);
+            phoneLastDelay.set(recipient.phone, effectiveOffset + minSamePhoneGap);
+        }
+
+        totalBackfilled += pendingRecipients.length;
+        skip += BATCH_SIZE;
+
+        // Safety break if we are looping too much (optional)
+        if (pendingRecipients.length < BATCH_SIZE) break;
     }
 
-    if (pendingRecipients.length > 0) {
-        logger.info(`[Worker] Backfilled ${pendingRecipients.length} recipients into Redis.`);
+    if (totalBackfilled > 0) {
+        logger.info(`[Worker] Backfilled ${totalBackfilled} recipients into Redis.`);
     }
 }
 
