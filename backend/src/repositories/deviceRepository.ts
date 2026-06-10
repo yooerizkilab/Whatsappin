@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma';
+import { DeviceStatus } from '@prisma/client';
 
 export const deviceRepository = {
     async findAll(userId: string) {
@@ -13,10 +14,10 @@ export const deviceRepository = {
         return prisma.device.create({ data });
     },
 
-    async updateStatus(id: string, status: string, phoneNumber?: string | null) {
+    async updateStatus(id: string, status: DeviceStatus, phoneNumber?: string | null) {
         return prisma.device.update({
             where: { id },
-            data: { status: status as any, ...(phoneNumber !== undefined && { phoneNumber }) },
+            data: { status, ...(phoneNumber !== undefined && { phoneNumber }) },
         });
     },
 

@@ -1,21 +1,22 @@
 import { prisma } from '../config/prisma';
+import { MessageStatus, MessageType } from '@prisma/client';
 
 export const messageRepository = {
     async create(data: {
         deviceId: string;
         to: string;
-        type: 'TEXT' | 'IMAGE' | 'DOCUMENT';
+        type: MessageType;
         content: string;
         mediaUrl?: string;
         scheduledAt?: Date | null;
     }) {
-        return prisma.message.create({ data: data as any });
+        return prisma.message.create({ data });
     },
 
-    async updateStatus(id: string, status: string, sentAt?: Date) {
+    async updateStatus(id: string, status: MessageStatus, sentAt?: Date) {
         return prisma.message.update({
             where: { id },
-            data: { status: status as any, ...(sentAt && { sentAt }) },
+            data: { status, ...(sentAt && { sentAt }) },
         });
     },
 
@@ -25,11 +26,11 @@ export const messageRepository = {
         });
     },
 
-    async findAll(filters: { userId?: string; deviceId?: string; status?: string; limit?: number; offset?: number }) {
+    async findAll(filters: { userId?: string; deviceId?: string; status?: MessageStatus; limit?: number; offset?: number }) {
         const { userId, deviceId, status, limit = 50, offset = 0 } = filters;
         const where = {
             ...(deviceId && { deviceId }),
-            ...(status && { status: status as any }),
+            ...(status && { status }),
             ...(userId && { device: { userId } }),
         };
         const [data, total] = await prisma.$transaction([
@@ -50,13 +51,13 @@ export const messageRepository = {
         from: string;
         to: string;
         externalId: string;
-        type: 'TEXT' | 'IMAGE' | 'DOCUMENT';
+        type: MessageType;
         content: string;
-        status: 'SENT' | 'DELIVERED' | 'READ';
+        status: MessageStatus;
     }) {
         return prisma.message.upsert({
             where: { externalId: data.externalId },
-            update: { status: data.status as any },
+            update: { status: data.status },
             create: {
                 ...data,
                 direction: 'INCOMING',
@@ -101,7 +102,7 @@ export const messageRepository = {
         });
     },
 
-    async count(filters: { deviceId?: string; status?: string }) {
-        return prisma.message.count({ where: filters as any });
+    async count(filters: { deviceId?: string; status?: MessageStatus }) {
+        return prisma.message.count({ where: filters });
     },
 };

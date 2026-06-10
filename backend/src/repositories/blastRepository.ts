@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma';
+import { BlastStatus, RecipientStatus, MessageType } from '@prisma/client';
 
 export const blastRepository = {
     async createJob(data: {
@@ -7,14 +8,14 @@ export const blastRepository = {
         templateId?: string;
         name: string;
         message: string;
-        type?: 'TEXT' | 'IMAGE' | 'DOCUMENT';
+        type?: MessageType;
         mediaUrl?: string;
         scheduledAt?: Date;
     }) {
         return prisma.blastJob.create({
             data: {
                 ...data,
-                type: (data.type as any) || 'TEXT',
+                type: data.type || 'TEXT',
                 status: data.scheduledAt ? 'SCHEDULED' : 'PENDING'
             }
         });
@@ -52,29 +53,29 @@ export const blastRepository = {
         });
     },
 
-    async updateJobStatus(id: string, status: string, extra?: { startedAt?: Date; completedAt?: Date }) {
-        return prisma.blastJob.update({ where: { id }, data: { status: status as any, ...extra } });
+    async updateJobStatus(id: string, status: BlastStatus, extra?: { startedAt?: Date; completedAt?: Date }) {
+        return prisma.blastJob.update({ where: { id }, data: { status, ...extra } });
     },
 
 
     async markRecipientProcessing(id: string) {
         return prisma.blastRecipient.updateMany({
             where: { id, status: 'PENDING' },
-            data: { status: 'PROCESSING' as any },
+            data: { status: 'PROCESSING' },
         });
     },
 
     async resetRecipientPending(id: string, error?: string) {
         return prisma.blastRecipient.update({
             where: { id },
-            data: { status: 'PENDING' as any, error },
+            data: { status: 'PENDING', error },
         });
     },
 
     async updateRecipientStatus(id: string, status: 'SENT' | 'FAILED', error?: string, sentAt?: Date) {
         const recipient = await prisma.blastRecipient.update({
             where: { id },
-            data: { status, error, ...(sentAt && { sentAt }) },
+            data: { status: status as RecipientStatus, error, ...(sentAt && { sentAt }) },
             include: { blastJob: true }
         });
 
