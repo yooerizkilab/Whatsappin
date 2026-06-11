@@ -67,6 +67,17 @@ export async function startMessageWorker() {
     await backfillScheduledMessages();
 }
 
+async function backfillScheduledMessages() {
+    const pendingScheduled = await prisma.message.findMany({
+        where: { status: 'PENDING', scheduledAt: { not: null } }
+    });
+
+    for (const msg of pendingScheduled) {
+        const delay = (msg as any).scheduledAt ? Math.max(0, new Date((msg as any).scheduledAt).getTime() - Date.now()) : 0;
+        await addMessageJob(msg.id, delay);
+    }
+}
+
 export async function stopMessageWorker() {
     if (messageWorker) {
         await messageWorker.close();

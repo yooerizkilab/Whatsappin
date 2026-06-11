@@ -14,6 +14,8 @@ import rateLimit from '@fastify/rate-limit';
 import { redisConnection } from './config/redis';
 import compression from '@fastify/compress';
 import metrics from 'fastify-metrics';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 import { authRoutes } from './routes/auth.routes';
 import { deviceRoutes } from './routes/device.routes';
 import { messageRoutes } from './routes/message.routes';
@@ -66,6 +68,38 @@ async function buildServer() {
     await fastify.register(compression);
 
     await fastify.register(metrics, { endpoint: '/metrics' });
+
+    await fastify.register(fastifySwagger, {
+        openapi: {
+            info: {
+                title: 'WhatsApp Gateway API',
+                description: 'Documentation for WhatsApp Gateway API',
+                version: '1.0.0'
+            },
+            components: {
+                securitySchemes: {
+                    bearerAuth: {
+                        type: 'http',
+                        scheme: 'bearer',
+                        bearerFormat: 'JWT'
+                    },
+                    apiKeyAuth: {
+                        type: 'apiKey',
+                        name: 'x-api-key',
+                        in: 'header'
+                    }
+                }
+            }
+        }
+    });
+
+    await fastify.register(fastifySwaggerUi, {
+        routePrefix: '/docs',
+        uiConfig: {
+            docExpansion: 'list',
+            deepLinking: false
+        },
+    });
 
     await fastify.register(jwt, { secret: env.JWT_SECRET });
 
